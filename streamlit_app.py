@@ -46,11 +46,11 @@ with st.sidebar:
     hf_email = 'anupam_purwar2019@pgp.isb.edu'
     hf_pass = 'PASS'
 
-option = st.selectbox(
+c_option = st.selectbox(
      'Which course would you like to learn today ?',
      ('POM', 'POE', 'CFin','QuantumPhysics','FinTech','Econ101'))
 
-st.write('You selected:', option)
+st.write('You selected:', c_option)
 
 if "messages" not in st.session_state.keys(): # Initialize the chat messages history
     st.session_state.messages = [
@@ -58,15 +58,15 @@ if "messages" not in st.session_state.keys(): # Initialize the chat messages his
     ]
 rouge = Rouge()
 try:
-  if option =='POM':
+  if c_option =='POM':
     indexPath="pom_index"
-  elif option =='POE':
+  elif c_option =='POE':
     indexPath="poe_index"
-  elif option =='CFin':
+  elif c_option =='CFin':
     indexPath="cfin_index"
-  elif option =='QuantumPhysics':
+  elif c_option =='QuantumPhysics':
     indexPath="qphy_index"
-  elif option =='FinTech':
+  elif c_option =='FinTech':
     indexPath="fast_index"
   else:
     indexPath="eco_index"
@@ -125,6 +125,6 @@ if st.session_state.messages[-1]["role"] != "assistant":
             csv_buffer = StringIO()
             df.to_csv(csv_buffer)
             s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
-            s3_resource.Object(bucket, option+'_course_logs.csv').put(Body=csv_buffer.getvalue())
+            s3_resource.Object(bucket, c_option+'_course_logs.csv').put(Body=csv_buffer.getvalue())
             message = {"role": "assistant", "content": response.response}
             st.session_state.messages.append(message) # Add response to message history
