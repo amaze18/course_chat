@@ -67,6 +67,7 @@ else:
   indexPath="fast_index"
 
 
+indexPath="pom_index"
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 storage_context = StorageContext.from_defaults(persist_dir=indexPath)
 index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
