@@ -38,11 +38,11 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
 
 st.set_page_config(page_title="Chat with POM Course Material, powered by AIXplorers", page_icon="✅", layout="centered", initial_sidebar_state="auto", menu_items=None)
 openai.api_key = os.environ['SECRET_TOKEN']
-st.title("Chat with your Course, powered by [AIXplorers](https://anupam-purwar.github.io/page/research_group.html)!! 💬")
+st.title("Chat with your Course, developed by [Kush](https://www.linkedin.com/in/kush-juvekar/)!! 💬")
 
 with st.sidebar:
     st.title('🤗💬Your Course Made Easy @ Chat Bot')
-    st.success('Access to this Gen-AI Powered Chatbot is provided by  [Anupam](https://anupam-purwar.github.io/page/research_group.html)!!', icon='✅')
+    st.success('Access to this Gen-AI Powered Chatbot is provided by [Anupam](https://anupam-purwar.github.io/page/research_group.html)!!', icon='✅')
     hf_email = 'anupam_purwar2019@pgp.isb.edu'
     hf_pass = 'PASS'
 
@@ -67,7 +67,6 @@ else:
   indexPath="fast_index"
 
 
-indexPath="pom_index"
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 storage_context = StorageContext.from_defaults(persist_dir=indexPath)
 index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
