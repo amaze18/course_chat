@@ -4,3 +4,7 @@ openai
 pandas
 boto3
 rouge
+nltk.download('stopwords')
+span-marker
+rank_bm25
+
