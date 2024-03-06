@@ -48,7 +48,7 @@ with st.sidebar:
 
 option = st.selectbox(
      'Which course would you like to learn today ?',
-     ('POM', 'POE', 'CFIN','FinTech'))
+     ('POM', 'POE', 'CFin','QuantumPhysics','FinTech','Econ101'))
 
 st.write('You selected:', option)
 
@@ -57,16 +57,22 @@ if "messages" not in st.session_state.keys(): # Initialize the chat messages his
         {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
     ]
 rouge = Rouge()
-if option =='POM':
+try:
+  if option =='POM':
+    indexPath="pom_index"
+  elif option =='POE':
+    indexPath="poe_index"
+  elif option =='CFin':
+    indexPath="cfin_index"
+  elif option =='QuantumPhysics':
+    indexPath="qphy_index"
+  elif option =='FinTech':
+    indexPath="fast_index"
+  else:
+    indexPath="eco_index"
+except:
   indexPath="pom_index"
-elif option =='POE':
-  indexPath="poe_index"
-elif option =='CFIN':
-  indexPath="cfin_index"
-else:
-  indexPath="fast_index"
-
-
+  
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 storage_context = StorageContext.from_defaults(persist_dir=indexPath)
 index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
@@ -119,6 +125,6 @@ if st.session_state.messages[-1]["role"] != "assistant":
             csv_buffer = StringIO()
             df.to_csv(csv_buffer)
             s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
-            s3_resource.Object(bucket, 'course_logs.csv').put(Body=csv_buffer.getvalue())
+            s3_resource.Object(bucket, option+'_course_logs.csv').put(Body=csv_buffer.getvalue())
             message = {"role": "assistant", "content": response.response}
             st.session_state.messages.append(message) # Add response to message history
