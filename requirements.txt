@@ -1,0 +1,6 @@
+llama-index==0.10.13
+streamlit 
+openai
+pandas
+boto3
+rouge
