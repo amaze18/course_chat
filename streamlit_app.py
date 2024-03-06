@@ -38,11 +38,11 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
 
 st.set_page_config(page_title="Chat with POM Course Material, powered by AIXplorers", page_icon="✅", layout="centered", initial_sidebar_state="auto", menu_items=None)
 openai.api_key = os.environ['SECRET_TOKEN']
-st.title("Chat with POM Course Material, powered by [AIXplorers](https://anupam-purwar.github.io/page/research_group.html)!! 💬")
+st.title("Chat with your Course, powered by [AIXplorers](https://anupam-purwar.github.io/page/research_group.html)!! 💬")
 
 with st.sidebar:
-    st.title('🤗💬FinTech for Billions @ Chat Bot')
-    st.success('Access to this Gen-AI Powered Chatbot is provided by  [Anupam](https://www.linkedin.com/in/anupamisb/)!!', icon='✅')
+    st.title('🤗💬Your Course Made Easy @ Chat Bot')
+    st.success('Access to this Gen-AI Powered Chatbot is provided by  [Anupam](https://anupam-purwar.github.io/page/research_group.html)!!', icon='✅')
     hf_email = 'anupam_purwar2019@pgp.isb.edu'
     hf_pass = 'PASS'
 
