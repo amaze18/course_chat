@@ -46,13 +46,27 @@ with st.sidebar:
     hf_email = 'anupam_purwar2019@pgp.isb.edu'
     hf_pass = 'PASS'
 
+option = st.selectbox(
+     'Which course would you like to learn today ?',
+     ('POM', 'POE', 'CFIN','FinTech'))
+
+st.write('You selected:', option)
 
 if "messages" not in st.session_state.keys(): # Initialize the chat messages history
     st.session_state.messages = [
-        {"role": "assistant", "content": "Ask me a question from the book!!"}
+        {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
     ]
 rouge = Rouge()
-indexPath="pom_index"
+if option =='POM':
+  indexPath="pom_index"
+elif option =='POE':
+  indexPath="poe_index"
+elif option =='CFIN':
+  indexPath="cfin_index"
+else:
+  indexPath="fast_index"
+
+
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 storage_context = StorageContext.from_defaults(persist_dir=indexPath)
 index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
