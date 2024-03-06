@@ -91,7 +91,7 @@ class HybridRetriever(BaseRetriever):
         all_nodes = bm25_nodes + vector_nodes
         query = str(query)
         all_nodes = postprocessor.postprocess_nodes(nodes=all_nodes,query_bundle=QueryBundle(query_str=query.lower()))
-        return all_nodes
+        return all_nodes[0:2]
 hybrid_retriever=HybridRetriever(vector_retriever,bm25_retriever)
 llm = OpenAI(model="gpt-3.5-turbo")
 service_context = ServiceContext.from_defaults(llm=llm)
