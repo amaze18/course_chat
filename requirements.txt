@@ -4,7 +4,7 @@ openai
 pandas
 boto3
 rouge
-nltk.download('stopwords')
+nltk
 span-marker
 rank_bm25
 
