@@ -1,4 +1,4 @@
-llama-index==0.10.13
+llama-index
 streamlit 
 openai
 pandas
