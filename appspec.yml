@@ -1,0 +1,42 @@
+version: 0.0
+os: linux
+
+files:
+  - source: https://github.com/amaze18/course_chat.git
+    destination: home/ubuntu/course_chat
+
+hooks:
+  ApplicationStop:
+    - location: scripts/application_stop.sh
+      timeout: 300
+      runas: ubuntu
+
+  DownloadBundle:
+    - location: scripts/download_bundle.sh
+      timeout: 300
+      runas: ubuntu
+
+  BeforeInstall:
+    - location: scripts/before_install.sh
+      timeout: 300
+      runas: ubuntu
+
+  Install:
+    - location: scripts/install.sh
+      timeout: 300
+      runas: ubuntu
+
+  AfterInstall:
+    - location: scripts/after_install.sh
+      timeout: 300
+      runas: ubuntu
+
+  ApplicationStart:
+    - location: scripts/application_start.sh
+      timeout: 300
+      runas: ubuntu
+
+  ValidateService:
+    - location: scripts/validate_service.sh
+      timeout: 300
+      runas: ubuntu
