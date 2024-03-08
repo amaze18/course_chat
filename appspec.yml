@@ -1,13 +1,13 @@
 version: 0.0
 os: linux
 files:
-  - source: appspec.yml
-    destination: /tmp
+  - source: amaze18-course_chat-2ab742a/
+    destination: /home/ubuntu/course_chat
 permissions:
-  - object: /tmp/appspec.yml
+  - object: /home/ubuntu/course_chat
     pattern: "**"
-    owner: root
-    group: root
+    owner: ubuntu
+    group: ubuntu
 hooks:
   ApplicationStop:
     - location: scripts/application_stop.sh
