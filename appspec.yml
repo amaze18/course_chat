@@ -1,13 +1,13 @@
 version: 0.0
 os: linux
 files:
-  - source: course_chat/
-    destination: /home/ubuntu/course_chat
+  - source: appspec.yml
+    destination: /tmp
 permissions:
-  - object: /home/ubuntu/course_chat
+  - object: /tmp/appspec.yml
     pattern: "**"
-    owner: ubuntu
-    group: ubuntu
+    owner: root
+    group: root
 hooks:
   ApplicationStop:
     - location: scripts/application_stop.sh
