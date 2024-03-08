@@ -1,8 +1,8 @@
 version: 0.0
 os: linux
 files:
-  - source: amaze18-course_chat-2ab742a/
-    destination: /home/ubuntu/course_chat
+  - source: /
+    destination: /opt/codedeploy-agent/deployment-root/
 permissions:
   - object: /home/ubuntu/course_chat
     pattern: "**"
@@ -11,22 +11,22 @@ permissions:
 hooks:
   ApplicationStop:
     - location: scripts/application_stop.sh
-      runas: root
+      runas: ubuntu
   DownloadBundle:
     - location: scripts/download_bundle.sh
-      runas: root
+      runas: ubuntu
   BeforeInstall:
     - location: scripts/before_install.sh
-      runas: root
+      runas: ubuntu
   Install:
     - location: scripts/install.sh
-      runas: root
+      runas: ubuntu
   AfterInstall:
     - location: scripts/after_install.sh
-      runas: root
+      runas: ubuntu
   ApplicationStart:
     - location: scripts/application_start.sh
-      runas: root
+      runas: ubuntu
   ValidateService:
     - location: scripts/validate_service.sh
-      runas: root
+      runas: ubuntu
