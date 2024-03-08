@@ -1,7 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: /
+  - source: course_chat/
     destination: /home/ubuntu/course_chat
 permissions:
   - object: /home/ubuntu/course_chat
