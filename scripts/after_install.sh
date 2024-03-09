@@ -2,4 +2,4 @@
 
 # Start Streamlit application
 pip install streamlit
-chmod +x scripts/application_start.sh
+sudo chmod +x scripts/application_start.sh
