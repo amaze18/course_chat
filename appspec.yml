@@ -4,7 +4,7 @@ files:
   - source: /
     destination: /opt/codedeploy-agent/deployment-root/
 permissions:
-  - object: /home/ubuntu/course_chat
+  - object: /
     pattern: "**"
     owner: ubuntu
     group: ubuntu
