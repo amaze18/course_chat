@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Start Streamlit application
-systemctl start streamlit
+sudo systemctl start streamlit
