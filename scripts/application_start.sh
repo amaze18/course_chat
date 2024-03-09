@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # Start Streamlit application
-streamlit run /home/ubuntu/course_chat/streamlit_app.py
+streamlit run /opt/codedeploy-agent/deployment-root/streamlit_app.py
