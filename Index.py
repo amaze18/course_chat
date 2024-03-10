@@ -1,20 +1,21 @@
 import nest_asyncio
 nest_asyncio.apply()
-# from github import Github
+from github import Github
 import boto3
 import os
 import openai
 openai.api_key=os.environ['SECRET_TOKEN']
 from llama_index.core import SimpleDirectoryReader
-from llama_index import EntityExtractor
-from llama_index.parsers import SentenceSplitter
-from llama_index.ingestion import IngestionPipeline
+from llama_index.extractors.entity import EntityExtractor
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.ingestion import IngestionPipeline
 from llama_index.core import ServiceContext
 from llama_index.core import VectorStoreIndex
-from llama_index.llms import OpenAI
+from llama_index.llms.openai import OpenAI
 from llama_index.core import StorageContext, load_index_from_storage
-from llama_index.memory import ChatMemoryBuffer
-from llama_index.embeddings import OpenAIEmbedding
+from llama_index.core.memory import ChatMemoryBuffer
+from llama_index.embeddings.openai import OpenAIEmbedding
+
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 
 s3 = boto3.client('s3')
@@ -25,7 +26,7 @@ session = boto3.Session(
     aws_access_key_id=os.environ['ACCESS_ID'],
     aws_secret_access_key=os.environ['ACCESS_KEY'],
 )
-s3 = session.resource('s3')
+s3 = session.client('s3')
 
 bucket_name = 'coursechat'  # Replace with your actual S3 bucket name
 
@@ -33,22 +34,25 @@ bucket_name = 'coursechat'  # Replace with your actual S3 bucket name
 # This approach works if you want to download the latest object from a specific prefix
 
 # Specify a prefix to narrow down objects (optional)
-prefix = '/'  # Replace with a prefix if you want to filter by folder (optional)
-
-response = s3.list_objects(Bucket=bucket_name, Prefix=prefix, SortOrder='Descending')
+# List objects in the bucket
+response = s3.list_objects_v2(Bucket=bucket_name)
 
 # Check if there are any objects
 if 'Contents' not in response:
-    print("No objects found in the bucket or specified prefix.")
+    print("No objects found in the bucket.")
 else:
-    # Get the key of the first object (latest upload based on sort order)
-    latest_object_key = response['Contents'][0]['Key']
+    # Sort objects based on last modified time
+    objects = sorted(response['Contents'], key=lambda x: x['LastModified'], reverse=True)
+
+    # Get the key of the first object (latest upload)
+    latest_object_key = objects[0]['Key']
 
     # Specify the desired download path
     download_path = '/home/ubuntu'  # Replace with your desired path
 
     local_filename = f"{download_path}/{latest_object_key}"
     s3.download_file(bucket_name, latest_object_key, local_filename)
+
 
 def indexgenerator(indexPath, documentsPath):
 
@@ -85,6 +89,7 @@ def indexgenerator(indexPath, documentsPath):
 
 
 
+
 indexPath=r"/"
 documentsPath=f"/home/ubuntu"
 indexgenerator(indexPath,documentsPath)
@@ -98,3 +103,5 @@ indexgenerator(indexPath,documentsPath)
 #     with open(file_path, 'r') as file:
 #         content = file.read()
 #         repo.create_file(file_path, "Commit message", content)
+
+
