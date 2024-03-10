@@ -10,7 +10,7 @@ from llama_index.extractors import EntityExtractor
 from llama_index.parsers import SentenceSplitter
 from llama_index.ingestion import IngestionPipeline
 from llama_index.core import ServiceContext
-from llama_index.core. import VectorStoreIndex
+from llama_index.core import VectorStoreIndex
 from llama_index.llms import OpenAI
 from llama_index.core import StorageContext, load_index_from_storage
 from llama_index.memory import ChatMemoryBuffer
