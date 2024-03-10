@@ -6,7 +6,7 @@ import os
 import openai
 openai.api_key=os.environ['SECRET_TOKEN']
 from llama_index.core import SimpleDirectoryReader
-from llama_index.extractors import EntityExtractor
+from llama_index import EntityExtractor
 from llama_index.parsers import SentenceSplitter
 from llama_index.ingestion import IngestionPipeline
 from llama_index.core import ServiceContext
