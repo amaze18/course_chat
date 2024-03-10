@@ -5,15 +5,16 @@ import boto3
 import os
 import openai
 openai.api_key=os.environ['SECRET_TOKEN']
-from llama_index.core import SimpleDirectoryReader
-from llama_index.extractors.metadata_extractors import EntityExtractor
-from llama_index.node_parser import SentenceSplitter
-from llama_index.ingestion import IngestionPipeline
-from llama_index.core import ServiceContext, VectorStoreIndex
-from llama_index.llms import OpenAI
-from llama_index.core import (StorageContext,load_index_from_storage)
-from llama_index.memory import ChatMemoryBuffer
-from llama_index.embeddings import OpenAIEmbedding
+from llama_index.core.directory_reader import SimpleDirectoryReader
+from llama_index.extractors.entity_extractor import EntityExtractor
+from llama_index.parsers.sentence_splitter import SentenceSplitter
+from llama_index.ingestion.pipeline import IngestionPipeline
+from llama_index.core.service_context import ServiceContext
+from llama_index.core.vector_store_index import VectorStoreIndex
+from llama_index.llms.openai import OpenAI
+from llama_index.core.storage_context import StorageContext, load_index_from_storage
+from llama_index.memory.chat_memory import ChatMemoryBuffer
+from llama_index.embeddings.openai_embedding import OpenAIEmbedding
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 
 s3 = boto3.client('s3')
