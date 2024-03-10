@@ -90,7 +90,7 @@ def indexgenerator(indexPath, documentsPath):
 
 
 
-indexPath=r"/"
+indexPath=r"index_path"
 documentsPath=f"/home/ubuntu"
 indexgenerator(indexPath,documentsPath)
 
