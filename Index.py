@@ -5,20 +5,20 @@ import boto3
 import os
 import openai
 openai.api_key=os.environ['SECRET_TOKEN']
-from llama_index import SimpleDirectoryReader
+from llama_index.core import SimpleDirectoryReader
 from llama_index.extractors.metadata_extractors import EntityExtractor
 from llama_index.node_parser import SentenceSplitter
 from llama_index.ingestion import IngestionPipeline
-from llama_index import ServiceContext, VectorStoreIndex
+from llama_index.core import ServiceContext, VectorStoreIndex
 from llama_index.llms import OpenAI
-from llama_index import (StorageContext,load_index_from_storage)
+from llama_index.core import (StorageContext,load_index_from_storage)
 from llama_index.memory import ChatMemoryBuffer
 from llama_index.embeddings import OpenAIEmbedding
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
 
 s3 = boto3.client('s3')
-github_token = os.environ['GITHUB_TOKEN']
-github_repo = os.environ['GITHUB_REPO']
+# github_token = os.environ['GITHUB_TOKEN']
+# github_repo = os.environ['GITHUB_REPO']
 
 session = boto3.Session(
     aws_access_key_id=os.environ['ACCESS_ID'],
