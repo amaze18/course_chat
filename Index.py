@@ -1,6 +1,6 @@
 import nest_asyncio
 nest_asyncio.apply()
-from github import Github
+# from github import Github
 import boto3
 import os
 import openai
