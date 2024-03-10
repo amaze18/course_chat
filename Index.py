@@ -1,7 +1,7 @@
 import nest_asyncio
 nest_asyncio.apply()
-     
-
+from github import Github
+import boto3
 import os
 import openai
 openai.api_key=os.environ['SECRET_TOKEN']
@@ -15,6 +15,40 @@ from llama_index import (StorageContext,load_index_from_storage)
 from llama_index.memory import ChatMemoryBuffer
 from llama_index.embeddings import OpenAIEmbedding
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
+
+s3 = boto3.client('s3')
+github_token = os.environ['GITHUB_TOKEN']
+github_repo = os.environ['GITHUB_REPO']
+
+session = boto3.Session(
+    aws_access_key_id=os.environ['ACCESS_ID'],
+    aws_secret_access_key=os.environ['ACCESS_KEY'],
+)
+s3 = session.resource('s3')
+
+bucket_name = 'coursechat'  # Replace with your actual S3 bucket name
+
+# Option 1: Using list_objects with SortOrder and Prefix (if applicable)
+# This approach works if you want to download the latest object from a specific prefix
+
+# Specify a prefix to narrow down objects (optional)
+prefix = '/'  # Replace with a prefix if you want to filter by folder (optional)
+
+response = s3.list_objects(Bucket=bucket_name, Prefix=prefix, SortOrder='Descending')
+
+# Check if there are any objects
+if 'Contents' not in response:
+    print("No objects found in the bucket or specified prefix.")
+else:
+    # Get the key of the first object (latest upload based on sort order)
+    latest_object_key = response['Contents'][0]['Key']
+
+    # Specify the desired download path
+    download_path = '/home/ubuntu'  # Replace with your desired path
+
+    local_filename = f"{download_path}/{latest_object_key}"
+    s3.download_file(bucket_name, latest_object_key, local_filename)
+
 def indexgenerator(indexPath, documentsPath):
 
     # check if storage already exists
@@ -48,8 +82,18 @@ def indexgenerator(indexPath, documentsPath):
 
     return index
 
-indexPath=r"index_path"
-documentsPath=r"documents_path"
+
+
+indexPath=r"/"
+documentsPath=f"/home/ubuntu"
 indexgenerator(indexPath,documentsPath)
 
-     
+# def push_to_github(file_path):
+#     # Authenticate with GitHub
+#     g = Github(github_token)
+#     repo = g.get_repo(github_repo)
+
+#     # Push the file to the repository
+#     with open(file_path, 'r') as file:
+#         content = file.read()
+#         repo.create_file(file_path, "Commit message", content)
