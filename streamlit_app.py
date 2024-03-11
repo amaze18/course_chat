@@ -24,21 +24,18 @@ import streamlit as st
 
 DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
   The following is a friendly conversation between a user and an AI assistant.
-  The assistant is talkative and provides lots of specific details from its context and its own knowledge.
-  If the assistant does not know the answer to a question, it truthfully says it
-  does not know.
-
+  The assistant is talkative and provides lots of specific details from its context only.
   Here are the relevant documents for the context:
 
   {context_str}
 
-  Instruction: Based on the above document, provide a detailed answer with logical formation of paragraphs for the user question below.
-  Answer "don't know" if information not present in the document. Also, decline to answer questions that are not related to context."
+  Instruction: Based on the above context, provide a detailed answer with logical formation of paragraphs for the user question below.
+  Answer "don't know" if information is not present in context. Also, decline to answer questions that are not related to context."
   """
 
 st.set_page_config(page_title="Chat with POM Course Material, powered by AIXplorers", page_icon="✅", layout="centered", initial_sidebar_state="auto", menu_items=None)
 openai.api_key = os.environ['SECRET_TOKEN']
-st.title("Chat with your Course, developed by [Kush](https://www.linkedin.com/in/kush-juvekar/)!! 💬")
+st.title("Chat with your Course, developed by [GurukulAI](https://www.linkedin.com/in/kush-juvekar/)!! 💬")
 
 with st.sidebar:
     st.title('🤗💬Your Course Made Easy @ Chat Bot')
