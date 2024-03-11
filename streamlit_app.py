@@ -32,8 +32,8 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
 
   {context_str}
 
-  Instruction: Based on the above document and your own knowledge, provide a detailed answer with logical formation of paragraphs for the user question below.
-  Answer "don't know" if not present in the document. Also, respectfully decline to answer questions that are not related to context."
+  Instruction: Based on the above document, provide a detailed answer with logical formation of paragraphs for the user question below.
+  Answer "don't know" if information not present in the document. Also, decline to answer questions that are not related to context."
   """
 
 st.set_page_config(page_title="Chat with POM Course Material, powered by AIXplorers", page_icon="✅", layout="centered", initial_sidebar_state="auto", menu_items=None)
