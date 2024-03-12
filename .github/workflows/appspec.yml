@@ -1,0 +1,36 @@
+name: Push indexPath to GitHub Repo
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Runs every 5 minutes
+
+jobs:
+  push_indexpath:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.10
+        
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+      
+    - name: Run Python script and generate index
+      run: |
+        python Index.py
+
+    - name: Commit indexPath changes
+      run: |
+        git config --global user.email "anupam_purwar2019@pgp.isb.edu"
+        git config --global user.name "amaze18"
+        git add /github/workflow/index_path  # Replace 'index_path' with the path to your indexPath file
+        git commit -m "Update indexPath"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
