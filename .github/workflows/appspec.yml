@@ -29,7 +29,7 @@ jobs:
       run: |
         git config --global user.email "anupam_purwar2019@pgp.isb.edu"
         git config --global user.name "amaze18"
-        git add /github/workflow/index_path  # Replace 'index_path' with the path to your indexPath file
+        git add /github/workflow/index_path 
         git commit -m "Update indexPath"
         git push
       env:
