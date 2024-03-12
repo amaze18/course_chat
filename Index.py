@@ -48,7 +48,7 @@ else:
     latest_object_key = objects[0]['Key']
 
     # Specify the desired download path
-    download_path = '/home/ubuntu'  # Replace with your desired path
+    download_path = '/github/workspace'  # Replace with your desired path
 
     local_filename = f"{download_path}/{latest_object_key}"
     s3.download_file(bucket_name, latest_object_key, local_filename)
@@ -91,7 +91,7 @@ def indexgenerator(indexPath, documentsPath):
 
 
 indexPath=r"index_path"
-documentsPath=f"/home/ubuntu"
+documentsPath=f"/github/workspace"
 indexgenerator(indexPath,documentsPath)
 
 # def push_to_github(file_path):
