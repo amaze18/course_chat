@@ -7,4 +7,5 @@ rouge
 nltk
 span-marker
 rank_bm25
+Pygithub
 
