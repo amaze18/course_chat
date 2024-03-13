@@ -89,7 +89,7 @@ def indexgenerator(indexPath, documentsPath):
 
 
 
-indexPath=f"/home/ubuntu"
+indexPath=f"/home/ubuntu/goutham"
 documentsPath=f"/home/ubuntu"
 indexgenerator(indexPath,documentsPath)
 
@@ -110,7 +110,7 @@ repo_owner = "amaze18"
 repo_name = "course_chat"
 
 # Directory to be pushed
-directory_path = r"goutham"
+directory_path = indexPath
 
 # Branch name
 branch_name = "index"
