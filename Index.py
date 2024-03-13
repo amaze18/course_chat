@@ -29,7 +29,6 @@ session = boto3.Session(
 s3 = session.client('s3')
 
 bucket_name = 'coursechat'  # Replace with your actual S3 bucket name
-
 # Option 1: Using list_objects with SortOrder and Prefix (if applicable)
 # This approach works if you want to download the latest object from a specific prefix
 
@@ -48,7 +47,7 @@ else:
     latest_object_key = objects[0]['Key']
 
     # Specify the desired download path
-    download_path = '/github/workspace'  # Replace with your desired path
+    download_path = '/home/ubuntu'  # Replace with your desired path
 
     local_filename = f"{download_path}/{latest_object_key}"
     s3.download_file(bucket_name, latest_object_key, local_filename)
@@ -90,8 +89,8 @@ def indexgenerator(indexPath, documentsPath):
 
 
 
-indexPath=r"index_path"
-documentsPath=f"/github/workspace"
+indexPath=f"/home/ubuntu/goutham"
+documentsPath=f"/home/ubuntu"
 indexgenerator(indexPath,documentsPath)
 
 # def push_to_github(file_path):
@@ -105,3 +104,48 @@ indexgenerator(indexPath,documentsPath)
 #         repo.create_file(file_path, "Commit message", content)
 
 
+token = os.environ['GITHUB_TOKEN']
+# Repository information
+repo_owner = "amaze18"
+repo_name = "course_chat"
+
+# Directory to be pushed
+directory_path = indexPath
+
+# Branch name
+branch_name = "index"
+
+def push_directory_to_github(directory_path, repo_owner, repo_name, token, branch_name):
+    # Authenticate to GitHub using token
+    g = Github(token)
+
+    # Get the repository
+    repo = g.get_user(repo_owner).get_repo(repo_name)
+
+    # Create branch if not exists
+    branches = repo.get_branches()
+    branch_exists = False
+    for b in branches:
+        if b.name == branch_name:
+            branch_exists = True
+            break
+    if not branch_exists:
+        repo.create_git_ref(ref=f"refs/heads/{branch_name}", sha=repo.get_branch("main").commit.sha)
+
+    # Create a folder in the repository with the directory name
+    dir_name = os.path.basename(directory_path)
+    repo.create_file(f"{dir_name}/.gitkeep", f"Creating {dir_name} folder", '')
+
+    # Push all files in the directory to the repository
+    for file_name in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, file_name)
+        with open(file_path, 'rb') as file:  # Open the file in binary mode
+            content = file.read()  # Read content as bytes
+            # Convert bytes to UTF-8 encoded string
+            content_utf8 = content.decode('utf-8', 'ignore')
+            repo.create_file(f"{dir_name}/{file_name}", f"Add {file_name}", content_utf8, branch=branch_name)
+
+    print("Directory pushed successfully to GitHub.")
+
+# Push the directory to GitHub
+push_directory_to_github(directory_path, repo_owner, repo_name, token,branch_name)
