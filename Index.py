@@ -29,7 +29,6 @@ session = boto3.Session(
 s3 = session.client('s3')
 
 bucket_name = 'coursechat'  # Replace with your actual S3 bucket name
-
 # Option 1: Using list_objects with SortOrder and Prefix (if applicable)
 # This approach works if you want to download the latest object from a specific prefix
 
@@ -48,9 +47,9 @@ else:
     latest_object_key = objects[0]['Key']
 
     # Specify the desired download path
-    download_path = '/'  # Replace with your desired path
+    download_path = '/home/ubuntu'  # Replace with your desired path
 
-    local_filename = f"{download_path}{latest_object_key}"
+    local_filename = f"{download_path}/{latest_object_key}"
     s3.download_file(bucket_name, latest_object_key, local_filename)
 
 
@@ -90,7 +89,7 @@ def indexgenerator(indexPath, documentsPath):
 
 
 
-indexPath=r"index_path"
+indexPath=f"/home/ubuntu"
 documentsPath=f"/home/ubuntu"
 indexgenerator(indexPath,documentsPath)
 
@@ -103,11 +102,15 @@ indexgenerator(indexPath,documentsPath)
 #     with open(file_path, 'r') as file:
 #         content = file.read()
 #         repo.create_file(file_path, "Commit message", content)
+
+
+token = os.environ['GITHUB_TOKEN']
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
 
 # Directory to be pushed
+directory_path = r"goutham"
 
 # Branch name
 branch_name = "index"
@@ -143,7 +146,6 @@ def push_directory_to_github(directory_path, repo_owner, repo_name, token, branc
             repo.create_file(f"{dir_name}/{file_name}", f"Add {file_name}", content_utf8, branch=branch_name)
 
     print("Directory pushed successfully to GitHub.")
-token = os.environ['GITHUB_TOKEN']
-# Push the directory to GitHub
-push_directory_to_github(indexPath, repo_owner, repo_name, token, branch_name)
 
+# Push the directory to GitHub
+push_directory_to_github(directory_path, repo_owner, repo_name, token,branch_name)
