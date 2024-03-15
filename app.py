@@ -171,6 +171,7 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
         indexPath=f"{download_path}/index/{course_name}"
         documents=f"{download_path}/{course_name}"
         indexgenerator(indexPath, documents)
+        st.spinner(text="Course onboarding..In progress...")
         push_directory_to_github(indexPath, repo_owner, repo_name, token,branch_name)
 
 
