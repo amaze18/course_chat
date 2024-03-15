@@ -1,3 +1,5 @@
+import time
+from rouge import Rouge
 import streamlit as st
 import os
 import boto3
@@ -21,6 +23,28 @@ from llama_index.llms.openai import OpenAI
 from llama_index.core import StorageContext, load_index_from_storage
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.legacy import ServiceContext
+from llama_index.legacy.llms import OpenAI
+from llama_index.legacy.retrievers import BM25Retriever
+from llama_index.legacy.retrievers import VectorIndexRetriever
+from llama_index.legacy.retrievers import BaseRetriever
+from llama_index.legacy.chat_engine import CondensePlusContextChatEngine
+from llama_index.legacy.query_engine import RetrieverQueryEngine
+from llama_index.legacy.postprocessor import LongContextReorder
+from llama_index.legacy.schema import MetadataMode
+from llama_index.legacy.schema import QueryBundle
+from llama_index.legacy import (StorageContext,load_index_from_storage)
+DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
+  The following is a friendly conversation between a user and an AI assistant.
+  The assistant is talkative and provides lots of specific details from its context only.
+  Here are the relevant documents for the context:
+
+  {context_str}
+
+  Instruction: Based on the above context, provide a detailed answer with logical formation of paragraphs for the user question below.
+  Answer "don't know" if information is not present in context. Also, decline to answer questions that are not related to context."
+  """
+
 
 s3_bucket_name="coursechat"
 access_key = os.environ.get('ACCESS_ID')
@@ -40,8 +64,8 @@ branch_name = "index"
 from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
-
-st.cache_data.clear()
+st.title("Courshera: Your Gen AI buddy")
+#st.cache_data.clear()
 
 allowed_emails_csv_path = "allowed_emails.csv"
 allowed_emails_df = pd.read_csv('allowed_emails.csv')
@@ -157,7 +181,7 @@ def push_directory_to_github(directory_path, repo_owner, repo_name, token, branc
     dir_name = os.path.basename(directory_path)
     branch = repo.get_branch("index")
     try:
-        contents = repo.get_contents(course_name, ref=branch.commit.sha)
+        contents = repo.get_contents(f"Indices/{course_name}", ref=branch.commit.sha)
         for content_file in contents:
             repo.delete_file(content_file.path, f"Deleting {content_file.path}", content_file.sha, branch="index")
     except:
@@ -171,9 +195,95 @@ def push_directory_to_github(directory_path, repo_owner, repo_name, token, branc
             content = file.read()  # Read content as bytes
             # Convert bytes to UTF-8 encoded string
             content_utf8 = content.decode('utf-8', 'ignore')
-            repo.create_file(f"{dir_name}/{file_name}", f"Add {file_name}", content_utf8, branch=branch_name)
+            repo.create_file(f"Indices/{dir_name}/{file_name}", f"Add {file_name}", content_utf8, branch=branch_name)
 
 
+def get_indexed_course_list():
+    g = Github(token)
+
+    # Get the repository
+    repo = g.get_user(repo_owner).get_repo(repo_name)
+    branch = repo.get_branch("index")
+    try:
+       contents = repo.get_contents("Indices", ref=branch.commit.sha)
+       print(contents)
+       x=[]
+       for content_file in contents:
+           x.append(content_file.path[8:])
+       return x
+    except:
+        return []
+def Course_chat(option):
+    embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
+    indexPath=f"/home/ubuntu/Indices/{option}"
+    storage_context = StorageContext.from_defaults(persist_dir=indexPath)
+    index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
+    vector_retriever = VectorIndexRetriever(index=index,similarity_top_k=2)
+    bm25_retriever = BM25Retriever.from_defaults(index=index, similarity_top_k=2)
+    postprocessor = LongContextReorder()
+    rouge = Rouge()
+    class HybridRetriever(BaseRetriever):
+        def __init__(self,vector_retriever, bm25_retriever):
+            self.vector_retriever = vector_retriever
+            self.bm25_retriever = bm25_retriever
+            super().__init__()
+
+        def _retrieve(self, query, **kwargs):
+            bm25_nodes = self.bm25_retriever.retrieve(query, **kwargs)
+            vector_nodes = self.vector_retriever.retrieve(query, **kwargs)
+            all_nodes = bm25_nodes + vector_nodes
+            query = str(query)
+            all_nodes = postprocessor.postprocess_nodes(nodes=all_nodes,query_bundle=QueryBundle(query_str=query.lower()))
+            return all_nodes[0:2]
+    hybrid_retriever=HybridRetriever(vector_retriever,bm25_retriever)
+    llm = OpenAI(model="gpt-3.5-turbo")
+    service_context = ServiceContext.from_defaults(llm=llm)
+    query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
+    if "messages" not in st.session_state.keys(): # Initialize the chat messages history
+        st.session_state.messages = [
+        {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
+        ]
+    if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
+        st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE)
+    if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
+        st.session_state.messages.append({"role": "user", "content": str(prompt)})
+    for message in st.session_state.messages: # Display the prior chat messages
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    # If last message is not from assistant, generate a new response
+    if st.session_state.messages[-1]["role"] != "assistant":
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                all_nodes  = hybrid_retriever.retrieve(str(prompt))
+                start = time.time()
+                response = st.session_state.chat_engine.chat(str(prompt))
+                end = time.time()
+                st.write(response.response)
+                context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
+                scores=rouge.get_scores(response.response,context_str)
+                try:
+                    df = pd.read_csv('logs/{option}.csv')
+                    new_row = {'Question': str(prompt), 'Answer': response.response,'Unigram_Recall' : scores[0]["rouge-1"]["r"],'Unigram_Precision' : scores[0]["rouge-1"]["p"],'Bigram_Recall' : scores[0]["rouge-2"]["r"],'Bigram_Precision' : scores[0]["rouge-2"]["r"],"Time" : end-start}
+                    df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
+                    df.to_csv('logs/{option}.csv', index=False)
+                    bucket = 'aiex' # already created on S3
+                    csv_buffer = StringIO()
+                    df.to_csv(csv_buffer)
+                    s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
+                    s3_resource.Object(bucket, option+'_course_logs.csv').put(Body=csv_buffer.getvalue())
+                except:
+                    df = pd.DataFrame(columns=['Question','Answer','Unigram_Recall','Unigram_Precision','Bigram_Recall','Bigram_Precision','Time'])
+                    new_row = {'Question': str(prompt), 'Answer': response.response,'Unigram_Recall' : scores[0]["rouge-1"]["r"],'Unigram_Precision' : scores[0]["rouge-1"]["p"],'Bigram_Recall' : scores[0]["rouge-2"]["r"],'Bigram_Precision' : scores[0]["rouge-2"]["r"],"Time" : end-start}
+                    df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
+                    df.to_csv('logs/{option}.csv', index=False)
+                    bucket = 'aiex' # already created on S3
+                    csv_buffer = StringIO()
+                    df.to_csv(csv_buffer)
+                    s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
+                    s3_resource.Object(bucket, option+'_course_logs.csv').put(Body=csv_buffer.getvalue())
+                message = {"role": "assistant", "content": response.response}
+                st.session_state.messages.append(message) # Add response to message history
 
 
 def upload_files(course_name, download_path = '/home/ubuntu'):
@@ -184,17 +294,21 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
     #course_name = st.text_input("Enter course name:")
 
     # File uploader
-    uploaded_file_list = st.file_uploader("Choose a file", type=["pdf", "txt", "csv"], accept_multiple_files=True)
+    uploaded_file_list = st.file_uploader("Choose your files", type=["pdf", "txt", "csv","doc","docx","xls","xlsx"], accept_multiple_files=True)
 
-    if st.button("Upload File") and uploaded_file_list:
+    if st.button("Upload your files") and uploaded_file_list:
         # Upload file to S3
         for uploaded_file in uploaded_file_list:
             upload_to_s3(course_name, uploaded_file)
         download_from_s3(course_name)
-        indexPath=f"{download_path}/index/{course_name}"
+
+        indexPath=f"{download_path}/Indices/{course_name}"
         documents=f"{download_path}/{course_name}"
-        indexgenerator(indexPath, documents)
-        push_directory_to_github(indexPath, repo_owner, repo_name, token,branch_name,course_name)
+        with st.spinner('Onboarding course:'):
+            indexgenerator(indexPath, documents)
+            push_directory_to_github(indexPath, repo_owner, repo_name, token,branch_name,course_name)
+        st.success('You are all set to chat with your course!')
+        st.write("Select action: Course Chat")
 
 
 def get_files_in_directory(bucket_name, directory):
@@ -220,19 +334,23 @@ def get_files_in_directory(bucket_name, directory):
 
 ## MAIN FUNCTION ##
 def main():
-    st.title("Course Management App")
     
     # Sidebar
     # action = st.sidebar.selectbox("Select Action", ["Create New Course", "Upload Files"])
     if LOGGED_IN == True:
       #username= __login__obj.get_username()
       #st.header(f"Hi {username}! Welcome back")
-      action=st.selectbox("Select Action",["Create New course","Update a existing course"])   
-      course_name = st.text_input("Course name:")
+      action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
       if action == "Create New course":
+           course_name = st.text_input("Course name:")
            create_new_course(course_name)
       elif action == "Update a existing course":
+           course_name = st.text_input("Course name:")
            upload_files(course_name)
+      elif action == "Course chat":
+           option=st.selectbox("Select course",tuple(get_indexed_course_list()))
+           Course_chat(option)
+
 
 
 
