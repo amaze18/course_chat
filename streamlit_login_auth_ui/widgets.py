@@ -123,7 +123,7 @@ class __login__:
         Renders the lottie animation.
         """
         lottie_json = load_lottieurl(self.lottie_url)
-        st_lottie(lottie_json, width = self.width, height = self.height)
+        st_lottie("https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json", width = self.width, height = self.height)
 
     def sign_up_widget(self) -> None:
         """
