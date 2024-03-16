@@ -222,7 +222,7 @@ def get_indexed_course_list():
        return x
     except:
         return []
-def Course_chat(option):
+def course_chat(option):
     embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
     indexPath=f"/home/ubuntu/Indices/{option}"  
     st.write(indexPath)
@@ -249,10 +249,8 @@ def Course_chat(option):
     llm = OpenAI(model="gpt-3.5-turbo")
     service_context = ServiceContext.from_defaults(llm=llm)
     query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
-    #if "messages" not in st.session_state.keys(): # Initialize the chat messages history
-       # st.session_state.messages = [
-      #  {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
-     #   ]
+    if "messages" not in st.session_state.keys(): # Initialize the chat messages history
+        st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
         st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE)
     if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
@@ -342,10 +340,10 @@ def get_files_in_directory(bucket_name, directory):
     return file_names
 
 def chat_reset(option):
-        st.session_state.messages = [
+    st.session_state.messages = [
         {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
         ]
-        Course_chat(option)
+    
         
         
 ## MAIN FUNCTION ##
@@ -364,8 +362,9 @@ def main():
            course_name = st.text_input("Course name:")
            upload_files(course_name)
       elif action == "Course chat":
-            option= st.selectbox("Select course",tuple(get_indexed_course_list()))
-            chat_reset(option)
+           option= st.selectbox("Select course",tuple(get_indexed_course_list()))
+           chat_reset(option)
+           course_chat(option)
             
 
 
