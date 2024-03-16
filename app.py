@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 import time
 from rouge import Rouge
 import streamlit as st
@@ -72,6 +74,11 @@ allowed_emails_csv_path = "allowed_emails.csv"
 allowed_emails_df = pd.read_csv('allowed_emails.csv')
 allowed_emails_set = set(allowed_emails_df['email'].str.lower())
 
+#__login__obj = __login__(auth_token = "courier_auth_token", 
+      ##             width = 200, height = 250, 
+        #            logout_button_name = 'Logout', hide_menu_bool = False, 
+         #           hide_footer_bool = False, 
+          #          lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
 
 __login__obj = __login__(auth_token = "courier_auth_token", 
                     company_name = "Shims",
@@ -217,7 +224,8 @@ def get_indexed_course_list():
         return []
 def Course_chat(option):
     embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
-    indexPath=f"/home/ubuntu/Indices/{option}"
+    indexPath=f"/home/ubuntu/Indices/{option}"  
+    st.write(indexPath)
     storage_context = StorageContext.from_defaults(persist_dir=indexPath)
     index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
     vector_retriever = VectorIndexRetriever(index=index,similarity_top_k=2)
@@ -333,11 +341,13 @@ def get_files_in_directory(bucket_name, directory):
 
     return file_names
 
-def chat_reset():
-    st.session_state.messages = [
+def chat_reset(option):
+        st.session_state.messages = [
         {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
         ]
-
+        Course_chat(option)
+        
+        
 ## MAIN FUNCTION ##
 def main():
     
@@ -354,8 +364,9 @@ def main():
            course_name = st.text_input("Course name:")
            upload_files(course_name)
       elif action == "Course chat":
-           option=st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
-           Course_chat(option)
+            option= st.selectbox("Select course",tuple(get_indexed_course_list()))
+            chat_reset(option)
+            
 
 
 
