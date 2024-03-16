@@ -34,6 +34,7 @@ from llama_index.legacy.postprocessor import LongContextReorder
 from llama_index.legacy.schema import MetadataMode
 from llama_index.legacy.schema import QueryBundle
 from llama_index.legacy import (StorageContext,load_index_from_storage)
+from streamlit_login_auth_ui.widgets import __login__
 DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
   The following is a friendly conversation between a user and an AI assistant.
   The assistant is talkative and provides lots of specific details from its context only.
@@ -61,7 +62,7 @@ repo_name = "course_chat"
 
 # Branch name
 branch_name = "index"
-from streamlit_login_auth_ui.widgets import __login__
+#from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
 st.title("Courshera: Your Gen AI buddy")
@@ -76,7 +77,8 @@ __login__obj = __login__(auth_token = "courier_auth_token",
                     width = 200, height = 250, 
                     logout_button_name = 'Logout', hide_menu_bool = False, 
                     hide_footer_bool = False, 
-                    lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
+                    lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json',
+                    allowed_emails_set = allowed_emails_set)
 
                     
 LOGGED_IN = __login__obj.build_login_ui()
