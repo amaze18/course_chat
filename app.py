@@ -333,7 +333,11 @@ def get_files_in_directory(bucket_name, directory):
 
     return file_names
 
-
+def chat_reset():
+    st.session_state.messages = [
+        {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
+        ]
+  
 ## MAIN FUNCTION ##
 def main():
     
