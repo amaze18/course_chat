@@ -267,7 +267,7 @@ def Course_chat(option):
                     new_row = {'Question': str(prompt), 'Answer': response.response,'Unigram_Recall' : scores[0]["rouge-1"]["r"],'Unigram_Precision' : scores[0]["rouge-1"]["p"],'Bigram_Recall' : scores[0]["rouge-2"]["r"],'Bigram_Precision' : scores[0]["rouge-2"]["r"],"Time" : end-start}
                     df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
                     df.to_csv('logs/{option}.csv', index=False)
-                    bucket = 'aiex' # already created on S3
+                    bucket = 'coursechat' # already created on S3
                     csv_buffer = StringIO()
                     df.to_csv(csv_buffer)
                     s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
@@ -277,11 +277,11 @@ def Course_chat(option):
                     new_row = {'Question': str(prompt), 'Answer': response.response,'Unigram_Recall' : scores[0]["rouge-1"]["r"],'Unigram_Precision' : scores[0]["rouge-1"]["p"],'Bigram_Recall' : scores[0]["rouge-2"]["r"],'Bigram_Precision' : scores[0]["rouge-2"]["r"],"Time" : end-start}
                     df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
                     df.to_csv('logs/{option}.csv', index=False)
-                    bucket = 'aiex' # already created on S3
+                    bucket = 'coursechat' # already created on S3
                     csv_buffer = StringIO()
                     df.to_csv(csv_buffer)
                     s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
-                    s3_resource.Object(bucket, option+'_course_logs.csv').put(Body=csv_buffer.getvalue())
+                    s3_resource.Object(bucket, '{option}_course_logs.csv').put(Body=csv_buffer.getvalue())
                 message = {"role": "assistant", "content": response.response}
                 st.session_state.messages.append(message) # Add response to message history
 
@@ -331,6 +331,10 @@ def get_files_in_directory(bucket_name, directory):
 
     return file_names
 
+def chat_reset():
+    st.session_state.messages = [
+        {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
+        ]
 
 ## MAIN FUNCTION ##
 def main():
@@ -343,12 +347,12 @@ def main():
       action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
       if action == "Create New course":
            course_name = st.text_input("Course name:")
-           create_new_course(course_name)
+           upload_files(course_name)
       elif action == "Update a existing course":
            course_name = st.text_input("Course name:")
            upload_files(course_name)
       elif action == "Course chat":
-           option=st.selectbox("Select course",tuple(get_indexed_course_list()))
+           option=st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
            Course_chat(option)
 
 
