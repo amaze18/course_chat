@@ -341,6 +341,9 @@ def get_files_in_directory(bucket_name, directory):
 
 def chat_reset(option):
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
+    #Reset the chat_engine in session state
+    if 'chat_engine' in st.session_state:
+      del st.session_state.chat_engine
          
 ## MAIN FUNCTION ##
 def main():
@@ -359,7 +362,7 @@ def main():
            upload_files(course_name)
       elif action == "Course chat":
            option= st.selectbox("Select course",tuple(get_indexed_course_list()))
-           #chat_reset(option)
+           chat_reset(option)
            course_chat(option)
             
 # Push the directory to GitHub
