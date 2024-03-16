@@ -340,12 +340,8 @@ def get_files_in_directory(bucket_name, directory):
     return file_names
 
 def chat_reset(option):
-    st.session_state.messages = [
-        {"role": "assistant", "content": "Ask me a question from the course you have selected!!"}
-        ]
-    
-        
-        
+    st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
+         
 ## MAIN FUNCTION ##
 def main():
     
@@ -366,11 +362,6 @@ def main():
            chat_reset(option)
            course_chat(option)
             
-
-
-
-
 # Push the directory to GitHub
 if __name__ == "__main__":
     main()
-
