@@ -1,6 +1,7 @@
 import time
 from rouge import Rouge
 import streamlit as st
+from streamlit_lottie import st_lottie
 import os
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -64,21 +65,27 @@ branch_name = "index"
 from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
-st.title("Courshera: Your Gen AI buddy")
+st.title("VidyaRAG: Learning Made Easy")
 #st.cache_data.clear()
 
 allowed_emails_csv_path = "allowed_emails.csv"
 allowed_emails_df = pd.read_csv('allowed_emails.csv')
 allowed_emails_set = set(allowed_emails_df['email'].str.lower())
 
+#__login__obj = __login__(auth_token = "courier_auth_token", 
+      ##             width = 200, height = 250, 
+        #            logout_button_name = 'Logout', hide_menu_bool = False, 
+         #           hide_footer_bool = False, 
+          #          lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
+
 __login__obj = __login__(auth_token = "courier_auth_token", 
                     company_name = "Shims",
                     width = 200, height = 250, 
                     logout_button_name = 'Logout', hide_menu_bool = False, 
                     hide_footer_bool = False, 
-                    lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
+                    lottie_url = "https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json",
+                    allowed_emails_set = allowed_emails_set)
 
-                    
 LOGGED_IN = __login__obj.build_login_ui()
 def create_s3_subfolder(course_name):
     s3 = boto3.client(
