@@ -249,8 +249,8 @@ def course_chat(option):
     llm = OpenAI(model="gpt-3.5-turbo")
     service_context = ServiceContext.from_defaults(llm=llm)
     query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
-    if "messages" not in st.session_state.keys(): # Initialize the chat messages history
-        st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
+    #if "messages" not in st.session_state.keys(): # Initialize the chat messages history
+     #   st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
         st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE)
     if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
