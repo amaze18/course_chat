@@ -72,11 +72,6 @@ allowed_emails_csv_path = "allowed_emails.csv"
 allowed_emails_df = pd.read_csv('allowed_emails.csv')
 allowed_emails_set = set(allowed_emails_df['email'].str.lower())
 
-#__login__obj = __login__(auth_token = "courier_auth_token", 
-      ##             width = 200, height = 250, 
-        #            logout_button_name = 'Logout', hide_menu_bool = False, 
-         #           hide_footer_bool = False, 
-          #          lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
 
 __login__obj = __login__(auth_token = "courier_auth_token", 
                     company_name = "Shims",
