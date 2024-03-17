@@ -302,7 +302,7 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
     #course_name = st.text_input("Enter course name:")
 
     # File uploader
-    uploaded_file_list = st.file_uploader("Choose your files", type=["pdf", "txt", "csv","doc","docx","xls","xlsx"], accept_multiple_files=True)
+    uploaded_file_list = st.file_uploader("Choose your files", type=["pdf", "txt", "csv","doc","docx","xls","xlsx",'ppt',"pptx","html"], accept_multiple_files=True)
 
     if st.button("Upload your files") and uploaded_file_list:
         # Upload file to S3
