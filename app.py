@@ -69,7 +69,7 @@ import pandas as pd
 from io import StringIO
 st.title("VidyaRAG: Learning Made Easy")
 #st.cache_data.clear()
-
+auth_token = os.environ.get("auth_token")
 allowed_emails_csv_path = "allowed_emails.csv"
 allowed_emails_df = pd.read_csv('allowed_emails.csv')
 allowed_emails_set = set(allowed_emails_df['email'].str.lower())
@@ -80,8 +80,8 @@ allowed_emails_set = set(allowed_emails_df['email'].str.lower())
          #           hide_footer_bool = False, 
           #          lottie_url = 'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json')
 
-__login__obj = __login__(auth_token = "courier_auth_token", 
-                    company_name = "Shims",
+__login__obj = __login__(auth_token = auth_token, 
+                    company_name = "Evaluatingcodes",
                     width = 200, height = 250, 
                     logout_button_name = 'Logout', hide_menu_bool = False, 
                     hide_footer_bool = False, 
