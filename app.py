@@ -67,13 +67,13 @@ import pandas as pd
 from io import StringIO
 st.title("Courshera: Your Gen AI buddy")
 #st.cache_data.clear()
-
+auth_token = os.environ.get("auth_token")
 allowed_emails_csv_path = "allowed_emails.csv"
 allowed_emails_df = pd.read_csv('allowed_emails.csv')
 allowed_emails_set = set(allowed_emails_df['email'].str.lower())
 
-__login__obj = __login__(auth_token = "courier_auth_token", 
-                    company_name = "Shims",
+__login__obj = __login__(auth_token = auth_token, 
+                    company_name = "Evaluatingcodes",
                     width = 200, height = 250, 
                     logout_button_name = 'Logout', hide_menu_bool = False, 
                     hide_footer_bool = False, 
