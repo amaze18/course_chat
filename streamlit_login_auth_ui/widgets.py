@@ -311,6 +311,8 @@ class __login__:
                     self.animation()
         
         if selected_option == 'Create Account':
+            st.header("SIGN UP")
+            st.markdown("Please share your details in the form to enable SignUp!")
             self.sign_up_widget()
 
         if selected_option == 'Forgot Password?':
