@@ -199,6 +199,7 @@ def send_passwd_in_email(auth_token: str, username_forgot_passwd: str, email_for
             }
         }
     )
+    return resp
 
 def change_passwd(email_: str, random_password: str) -> None:
     """
