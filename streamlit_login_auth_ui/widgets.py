@@ -315,7 +315,11 @@ class __login__:
         if selected_option == 'Create Account':
             st.header("SIGN UP")
             # Add link to the form: https://docs.google.com/forms/d/e/1FAIpQLSfqieHwvG3chfzrzrRCjZ4LI3D6nyqpd9ljdNTNhA1fZWztSg/viewform
-            st.markdown("Please share your details in the form, to enable SignUp!")
+            st.markdown(
+                    """Please share your details in the  <a href="https://forms.gle/qfznb5p3FsQJJuLv8/">Form</a> to enable SignUp!
+                    """,
+                    unsafe_allow_html=True,
+                )
             self.sign_up_widget()
 
         if selected_option == 'Forgot Password?':
