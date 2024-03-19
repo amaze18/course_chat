@@ -108,6 +108,8 @@ class __login__:
                 #Call the sign_up_widget, once signup submit is pressed
                 #self.sign_up_widget()
 
+    
+            
                 if login_submit_button == True:
                     authenticate_user_check = check_usr_pass(username, password)
 
@@ -312,7 +314,8 @@ class __login__:
         
         if selected_option == 'Create Account':
             st.header("SIGN UP")
-            st.markdown("Please share your details in the form to enable SignUp!")
+            # Add link to the form: https://docs.google.com/forms/d/e/1FAIpQLSfqieHwvG3chfzrzrRCjZ4LI3D6nyqpd9ljdNTNhA1fZWztSg/viewform
+            st.markdown("Please share your details in the form, to enable SignUp!")
             self.sign_up_widget()
 
         if selected_option == 'Forgot Password?':
