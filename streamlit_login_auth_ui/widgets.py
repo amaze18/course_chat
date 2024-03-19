@@ -104,6 +104,9 @@ class __login__:
 
                 st.markdown("###")
                 login_submit_button = st.form_submit_button(label = 'Login')
+                #signup_submit_button = st.form_submit_button(label = 'Create Account')
+                #Call the sign_up_widget, once signup submit is pressed
+                #self.sign_up_widget()
 
                 if login_submit_button == True:
                     authenticate_user_check = check_usr_pass(username, password)
