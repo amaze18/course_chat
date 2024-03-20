@@ -67,7 +67,7 @@ branch_name = "index"
 from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
-st.title("VidyaRAG: Learning Made Easy")
+st.title("VidyaRANG: Learning Made Easy")
 #st.cache_data.clear()
 auth_token = os.environ.get("auth_token")
 allowed_emails_csv_path = "allowed_emails.csv"
