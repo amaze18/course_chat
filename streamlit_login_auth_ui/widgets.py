@@ -16,7 +16,6 @@ from .utils import generate_random_passwd
 from .utils import send_passwd_in_email
 from .utils import change_passwd
 from .utils import check_current_passwd
-#from .utils import allowed_emails_set
 
 class __login__:
     """
@@ -38,7 +37,7 @@ class __login__:
         9. lottie_url : The lottie animation you would like to use on the login page. Explore animations at - https://lottiefiles.com/featured
         10.allowed_emails_set: Set of allowed email addresses.
         """
-        self.auth_token = auth_token
+        self.auth_token = "pk_prod_8XP9SV26VR48KTHZ62Q63NS2AVGV"
         self.company_name = company_name
         self.width = width
         self.height = height
@@ -97,19 +96,17 @@ class __login__:
         if st.session_state['LOGGED_IN'] == False:
             st.session_state['LOGOUT_BUTTON_HIT'] = False 
 
-            del_login = st.empty()
+            del_login = st
             with del_login.form("Login Form"):
+                st.markdown("<center><h1>LOGIN</h1></center>", unsafe_allow_html=True)
                 username = st.text_input("Username", placeholder = 'Your unique username')
                 password = st.text_input("Password", placeholder = 'Your password', type = 'password')
 
                 st.markdown("###")
+                col1, col2 = st.columns(2)
+          
                 login_submit_button = st.form_submit_button(label = 'Login')
-                #signup_submit_button = st.form_submit_button(label = 'Create Account')
-                #Call the sign_up_widget, once signup submit is pressed
-                #self.sign_up_widget()
 
-    
-            
                 if login_submit_button == True:
                     authenticate_user_check = check_usr_pass(username, password)
 
@@ -122,6 +119,10 @@ class __login__:
                         self.cookies.save()
                         del_login.empty()
                         st.experimental_rerun()
+                        return username
+            st.write("**Click the top left arrow to create an account for first-time users.**")
+
+
 
     def animation(self) -> None:
         """
@@ -156,7 +157,7 @@ class __login__:
 
             if sign_up_submit_button:
                 if email_sign_up.lower() not in self.allowed_emails_set:
-                    st.error("Unauthorized email address!")
+                    st.error("Request admin for access [here](https://docs.google.com/forms/d/1MAzFIGeFoIzfCipCMLW7NmucQYgp1etLH4lkpOWExWg/edit)")
 
                 elif valid_name_check == False:
                     st.error("Please enter a valid name!")
@@ -243,7 +244,8 @@ class __login__:
         Creates the logout widget in the sidebar only if the user is logged in.
         """
         if st.session_state['LOGGED_IN'] == True:
-            del_logout = st.sidebar.empty()
+            del_logout = st.sidebar
+            del_logout.image("/home/ubuntu/Course-Chat.png")
             del_logout.markdown("#")
             logout_click_check = del_logout.button(self.logout_button_name)
 
@@ -254,7 +256,7 @@ class __login__:
                 del_logout.empty()
                 st.experimental_rerun()
 
-    def nav_sidebar(self):
+    def nav_sidebar(self,flag):
         """
         Creates the side navigaton bar
         """
@@ -268,6 +270,8 @@ class __login__:
                 styles = {
                     "container": {"padding": "5px"},
                     "nav-link": {"font-size": "14px", "text-align": "left", "margin":"0px"}} )
+            if flag == 1:
+                selected_option = "Create Account"
         return main_page_sidebar, selected_option
 
     def hide_menu(self) -> None:
@@ -290,6 +294,7 @@ class __login__:
         """
         Brings everything together, calls important functions.
         """
+        username = 0
         if 'LOGGED_IN' not in st.session_state:
             st.session_state['LOGGED_IN'] = False
 
@@ -302,12 +307,12 @@ class __login__:
             with open("_secret_auth_.json", "w") as auth_json:
                 json.dump([], auth_json)
 
-        main_page_sidebar, selected_option = self.nav_sidebar()
+        main_page_sidebar, selected_option = self.nav_sidebar(flag=0)
 
         if selected_option == 'Login':
             c1, c2 = st.columns([7,3])
             with c1:
-                self.login_widget()
+                username = self.login_widget()
             with c2:
                 if st.session_state['LOGGED_IN'] == False:
                     self.animation()
@@ -316,7 +321,7 @@ class __login__:
             st.header("SIGN UP")
             # Add link to the form: https://docs.google.com/forms/d/e/1FAIpQLSfqieHwvG3chfzrzrRCjZ4LI3D6nyqpd9ljdNTNhA1fZWztSg/viewform
             st.markdown(
-                    """Please share your details in the  <a href="https://forms.gle/qfznb5p3FsQJJuLv8/">Form</a> to enable SignUp!
+                    """Please share your details in the  <a href="https://forms.gle/qfznb5p3FsQJJuLv8/">form</a> to enable SignUp!
                     """,
                     unsafe_allow_html=True,
                 )
@@ -339,4 +344,4 @@ class __login__:
         if self.hide_footer_bool == True:
             self.hide_footer()
         
-        return st.session_state['LOGGED_IN']
+        return st.session_state['LOGGED_IN'] , username
