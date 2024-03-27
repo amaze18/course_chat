@@ -287,15 +287,23 @@ def course_chat(option,username=username):
     indexPath=f"/home/ubuntu/Indices/{option}"  
     storage_context = StorageContext.from_defaults(persist_dir=indexPath)
     index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
-    vector_retriever = VectorIndexRetriever(index=index,similarity_top_k=2)
+    if username == "GB123" or username == "Koosh0610" or username == "anupam.aiml@gmail.com" or username == "Helloworld" :
+        llm = OpenAI(model="gpt-4-1106-preview")
+        topk = 5
+    else:
+        llm = OpenAI(model="gpt-3.5-turbo-0125")
+        topk= 2
+    
+    vector_retriever = VectorIndexRetriever(index=index,similarity_top_k=topk)
+  
     bm25_flag = True
     try:
-        bm25_retriever = BM25Retriever.from_defaults(index=index,similarity_top_k=2)
+        bm25_retriever = BM25Retriever.from_defaults(index=index,similarity_top_k=topk)
     except:
         source_nodes = index.docstore.docs.values()
         nodes = list(source_nodes)
         bm25_flag = False
-        #bm25_retriever = BM25Retriever.from_defaults(nodes=nodes,similarity_top_k=2)
+      
     postprocessor = LongContextReorder()
     rouge = Rouge()
     class HybridRetriever(BaseRetriever):
@@ -310,16 +318,13 @@ def course_chat(option,username=username):
             all_nodes = bm25_nodes + vector_nodes
             query = str(query)
             all_nodes = postprocessor.postprocess_nodes(nodes=all_nodes,query_bundle=QueryBundle(query_str=query.lower()))
-            return all_nodes[0:2]
+            return all_nodes[0:topk]
 
     if bm25_flag:
         hybrid_retriever=HybridRetriever(vector_retriever,bm25_retriever)
     else:
         hybrid_retriever=vector_retriever
-    if username == "GB123" or username == "Koosh0610" or username == "anupam.aiml@gmail.com" or username == "Helloworld" :
-        llm = OpenAI(model="gpt-4-1106-preview")
-    else:
-        llm = OpenAI(model="gpt-3.5-turbo-0125")
+    
     service_context = ServiceContext.from_defaults(llm=llm)
     query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
     if "messages" not in st.session_state.keys(): # Initialize the chat messages history
