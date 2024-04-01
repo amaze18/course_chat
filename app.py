@@ -351,10 +351,10 @@ def course_chat(option,username=username):
                 context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
                 scores=rouge.get_scores(response.response,context_str)
                 try:
-                    df = pd.read_csv('logs/{option}.csv')
+                    df = pd.read_csv(f'logs/{option}.csv')
                     new_row = {'Question': str(prompt), 'Answer': response.response,'Unigram_Recall' : scores[0]["rouge-1"]["r"],'Unigram_Precision' : scores[0]["rouge-1"]["p"],'Bigram_Recall' : scores[0]["rouge-2"]["r"],'Bigram_Precision' : scores[0]["rouge-2"]["r"],"Time" : end-start}
                     df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
-                    df.to_csv('logs/{option}.csv', index=False)
+                    df.to_csv(f'logs/{option}.csv', index=False)
                     bucket = 'coursechat' # already created on S3
                     csv_buffer = StringIO()
                     df.to_csv(csv_buffer)
@@ -365,12 +365,12 @@ def course_chat(option,username=username):
                     df = pd.DataFrame(columns=['Question','Answer','Unigram_Recall','Unigram_Precision','Bigram_Recall','Bigram_Precision','Time'])
                     new_row = {'Question': str(prompt), 'Answer': response.response,'Unigram_Recall' : scores[0]["rouge-1"]["r"],'Unigram_Precision' : scores[0]["rouge-1"]["p"],'Bigram_Recall' : scores[0]["rouge-2"]["r"],'Bigram_Precision' : scores[0]["rouge-2"]["r"],"Time" : end-start}
                     df = pd.concat([df, pd.DataFrame(new_row, index=[0])], ignore_index=True)
-                    df.to_csv('logs/{option}.csv', index=False)
+                    df.to_csv(f'logs/{option}.csv', index=False)
                     bucket = 'coursechat' # already created on S3
                     csv_buffer = StringIO()
                     df.to_csv(csv_buffer)
                     s3_resource= boto3.resource('s3',aws_access_key_id=os.environ["ACCESS_ID"],aws_secret_access_key=os.environ["ACCESS_KEY"])
-                    s3_resource.Object(bucket, '{option}_course_logs.csv').put(Body=csv_buffer.getvalue())
+                    s3_resource.Object(bucket, f'{option}_course_logs.csv').put(Body=csv_buffer.getvalue())
                     st.session_state.message_history.append(ChatMessage(role=MessageRole.ASSISTANT,content=str(response.response)),)
                 message = {"role": "assistant", "content": response.response}
                 st.session_state.messages.append(message) # Add response to message history
