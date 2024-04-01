@@ -1,4 +1,4 @@
-
+import shutil
 import warnings
 warnings.filterwarnings("ignore")
 import time
@@ -331,8 +331,8 @@ def course_chat(option,username=username):
         st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     if "message_history" not in st.session_state.keys():
         st.session_state.message_history=[ChatMessage(role=MessageRole.ASSISTANT,content="Ask me a questioin form the course you have selected"),]
-    if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
-        st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE,condense_prompt=condense_prompt,chat_history=st.session_state.message_history)
+    #if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
+        #st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE,condense_prompt=condense_prompt,chat_history=st.session_state.message_history)
     if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
         st.session_state.messages.append({"role": "user", "content": str(prompt)})
     for message in st.session_state.messages: # Display the prior chat messages
@@ -345,7 +345,7 @@ def course_chat(option,username=username):
             with st.spinner("Thinking..."):
                 all_nodes  = hybrid_retriever.retrieve(str(prompt))
                 start = time.time()
-                response = st.session_state.chat_engine.chat(str(prompt))
+                response = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE,condense_prompt=condense_prompt,chat_history=st.session_state.message_history).chat(str(prompt))
                 end = time.time()
                 st.write(response.response)
                 context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
@@ -395,6 +395,7 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
         documents=f"{download_path}/{course_name}"
         with st.spinner('Onboarding course:'):
             indexgenerator(indexPath, documents)
+            shutil.rmtree(documents)
             push_directory_to_github(indexPath, repo_owner, repo_name, token,branch_name,course_name)
         st.success('You are all set to chat with your course!')
         st.write("Select action: Course Chat")
@@ -420,10 +421,10 @@ def get_files_in_directory(bucket_name, directory):
 
     return file_names
 
-def chat_reset(option):
+def chat_reset():
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
-    if 'chat_engine' in st.session_state:
-        del st.session_state.chat_engine
+    #if 'chat_engine' in st.session_state:
+        #del st.session_state.chat_engine
 
 ## MAIN FUNCTION ##
 def main():
@@ -441,8 +442,8 @@ def main():
            course_name = st.text_input("Course name:")
            upload_files(course_name)
       elif action == "Course chat":
-           option= st.selectbox("Select course",tuple(get_indexed_course_list()))
-           chat_reset(option)
+           option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
+           #chat_reset(option)
            course_chat(option)
       #st.footer("The user is solely responsible for uploading any content that may be subject to copyright.")
       st.markdown(
