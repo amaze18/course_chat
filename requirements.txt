@@ -12,6 +12,14 @@ streamlit-cookies-manager
 streamlit-option-menu 
 streamlit_lottie
 github
-
+llama-index-core
+llama-index-agent-openai
+llama-index-readers-file
+llama-index-postprocessor-cohere-rerank
+llama-index-llms-openai
+llama-index-embeddings-openai
+llama-index-llms-anthropic
+llama-index-embeddings-huggingface
+unstructured[html]
 
 
