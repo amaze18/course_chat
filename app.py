@@ -46,8 +46,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
 
-
-from llama_index.agent.openai import OpenAIAgent
+from pathlib import Path
+from llama_index.agent.openai.base import OpenAIAgent
 from llama_index.core import SummaryIndex
 from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from llama_index.core.node_parser import SentenceSplitter
@@ -59,6 +59,16 @@ from llama_index.core.objects import (
 )
 from llama_index.postprocessor.cohere_rerank import CohereRerank
 from llama_index.core.query_engine import SubQuestionQueryEngine
+
+from llama_index.readers.file import UnstructuredReader
+
+
+
+from llama_index.core import Settings
+from llama_index.core.schema import QueryBundle
+from llama_index.core.agent import ReActAgent
+
+
 
 # Define Embed+LLM globally
 embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
@@ -235,7 +245,7 @@ def nodesgenerator(documentsPath):
     return nodes
     
     
-async def build_agent_per_doc(nodes, indexPath, sindexPath):
+def build_agent_per_doc(nodes, indexPath, sindexPath, course_name):
      # check if storage already exists
     if not os.path.exists(indexPath):
         print("Not existing")
@@ -263,7 +273,7 @@ async def build_agent_per_doc(nodes, indexPath, sindexPath):
     if not os.path.exists(sindexPath):
         Path(sindexPath).parent.mkdir(parents=True, exist_ok=True)
         summary = str(
-            await summary_query_engine.aquery(
+            summary_query_engine.aquery(
                 "Extract a concise 1-2 line summary of this document"
             )
         )
@@ -276,50 +286,33 @@ async def build_agent_per_doc(nodes, indexPath, sindexPath):
         QueryEngineTool(
             query_engine=vector_query_engine,
             metadata=ToolMetadata(
-                name=f"vector_tool_{indexPath}",
+                name=f"vector_tool_{course_name}",
                 description=f"Useful for questions related to specific facts",
             ),
         ),
         QueryEngineTool(
             query_engine=summary_query_engine,
             metadata=ToolMetadata(
-                name=f"summary_tool_{sindexPath}",
+                name=f"summary_tool_{course_name}",
                 description=f"Useful for summarization questions",
             ),
         ),
     ]
 
     # build agent
-    function_llm = llm
+    function_llm = OpenAI(model="gpt-3.5-turbo-0125", temperature=0)
     agent = OpenAIAgent.from_tools(
         query_engine_tools,
-        llm=function_llm,
+        llm=OpenAI(model="gpt-3.5-turbo-0125", temperature=0),
         verbose=True,
-    #Doubt-1: I don't know these prompts. I need help in this
-        system_prompt="""
-  You're VidyaRANG. An AI assistant developed by members of AIGurukul to help students learn their course material via convertsations.
-  The following is a friendly conversation between a user and an AI assistant for answering questions related to query.
-  The assistant is talkative and provides lots of specific details from its context only.
-  Here are the relevant documents for the context:
-
-  {context_str}
-
-  Instruction: Based on the above context, provide a crisp answer IN THE USER'S LANGUAGE with logical formation of paragraphs for the user question below.
-  Strict Instruction: Answer "I don't know." if information is not present in context. Also, decline to answer questions that are not related to context."
-  """
+        system_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE,
+        prefix_messages = condense_prompt,
     )
-       condense_prompt = (
-  "Given the following conversation between a user and an AI assistant and a follow up question from user,"
-  "rephrase the follow up question to be a standalone question.\n"
-  "Chat History:\n"
-  "{chat_history}"
-  "\nFollow Up Input: {question}"
-  "\nStandalone question:")
 
     return agent, summary
 
 
-async def build_agents(documentsPath, indexPath, sindexPath):
+def build_agents(documentsPath, indexPath, sindexPath, course_name):
     # Build agents dictionary
     agents_dict = {}
     extra_info_dict = {}
@@ -327,13 +320,11 @@ async def build_agents(documentsPath, indexPath, sindexPath):
     # # this is for the baseline
     # all_nodes = []
 
-# Doubt-2 : nodesgenerator function is called inside for loop below, is it correct?
-
     for filename in os.listdir(documentsPath):
         
-        nodes = nodesgenerator(filename)
+        nodes = nodesgenerator(f"{documentsPath}/{filename}")
         
-        agent, summary = await build_agent_per_doc(nodes, indexPath, sindexPath)
+        agent, summary = build_agent_per_doc(nodes, indexPath, sindexPath, course_name)
 
         agents_dict[filename] = agent
             
@@ -396,12 +387,17 @@ def get_indexed_course_list():
        return x
     except:
         return []
-    
+        
+        
+        
+       
+        
+        
 def course_chat(option,username=username):
 
     indexPath=f"/home/ubuntu/Indices/{option}"  
     sindexPath=f"/home/ubuntu/SIndices/{option}"
-    documentsPath=f"/home/ubuntu/documentsPath/{option}"
+    documentsPath=f"/home/ubuntu/documentsPath/"
     #storage_context = StorageContext.from_defaults(persist_dir=indexPath)
     #index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=llm,embed_model=embed_model))
     if username == "GB123" or username == "Koosh0610" or username == "anupam.aiml@gmail.com" or username == "Helloworld" :
@@ -409,11 +405,9 @@ def course_chat(option,username=username):
         topk = 5
     else:
         llm = llm
-        topk= 2
-            
-    # Doubt-2(Continued): Or should I call here, by passing nodes argument to build_agents function
-    # nodes = nodesgenerator(documentsPath)    
-    agents_dict, extra_info_dict = await build_agents(documentsPath, indexPath, sindexPath)     
+        topk= 2  
+    
+    agents_dict, extra_info_dict = build_agents(documentsPath, indexPath, sindexPath, option)
     
     
     # define tool for each document agent
@@ -503,7 +497,7 @@ def course_chat(option,username=username):
     if "messages" not in st.session_state.keys(): # Initialize the chat messages history
         st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     if "message_history" not in st.session_state.keys():
-        st.session_state.message_history=[ChatMessage(role=MessageRole.ASSISTANT,content="Ask me a questioin form the course you have selected"),]
+        st.session_state.message_history=[ChatMessage(role=MessageRole.ASSISTANT,content="Ask me a question form the course you have selected"),]
     #if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
         #st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE,condense_prompt=condense_prompt,chat_history=st.session_state.message_history)
     if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
@@ -522,7 +516,7 @@ def course_chat(option,username=username):
                 response = top_agent.query(str(prompt))
                 end = time.time()
                 st.write(response.response)
-                #context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
+                context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
                 scores=rouge.get_scores(response.response,context_str)
                 try:
                     df = pd.read_csv(f'logs/{option}.csv')
@@ -550,7 +544,7 @@ def course_chat(option,username=username):
                 st.session_state.messages.append(message) # Add response to message history
 
 
-def upload_files(course_name, download_path = '/home/ubuntu'):
+def upload_files(course_name, download_path = f"/home/ubuntu/documentsPath"):
     
     st.header("Upload Files")
 
@@ -564,13 +558,14 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
         for uploaded_file in uploaded_file_list:
             upload_to_s3(course_name, uploaded_file)
         download_from_s3(course_name)
-
-        indexPath=f"{download_path}/Indices/{course_name}"
-        documents=f"{download_path}/{course_name}"
+        sindexPath=f"/home/ubuntu/SIndices/{course_name}"
+        indexPath=f"/home/ubuntu/Indices/{course_name}"
+        documents=download_path
         with st.spinner('Onboarding course:'):
-            indexgenerator(indexPath, documents)
+            agents_dict, extra_info_dict = build_agents(documents, indexPath, sindexPath, course_name) 
             shutil.rmtree(documents)
             push_directory_to_github(indexPath, repo_owner, repo_name, token,branch_name,course_name)
+            push_directory_to_github(sindexPath, repo_owner, repo_name, token,branch_name,course_name)
         st.success('You are all set to chat with your course!')
         st.write("Select action: Course Chat")
 
