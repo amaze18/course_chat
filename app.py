@@ -74,7 +74,7 @@ AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
 S3_BUCKET_NAME = s3_bucket_name
 
-token = os.environ['GITHUB_TOKEN']
+token = "your github token"
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
@@ -231,7 +231,7 @@ def indexgenerator(indexPath, documentsPath):
 def push_directory_to_github(directory_path, repo_owner, repo_name, token, branch_name,course_name):
     # Authenticate to GitHub using token
     g = Github(token)
-
+    print(token,repo_owner,repo_name)
     # Get the repository
     repo = g.get_user(repo_owner).get_repo(repo_name)
 
@@ -396,7 +396,7 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
         with st.spinner('Onboarding course:'):
             indexgenerator(indexPath, documents)
             shutil.rmtree(documents)
-            push_directory_to_github(indexPath, repo_owner, repo_name, token,branch_name,course_name)
+            push_directory_to_github(indexPath, repo_owner, repo_name, token, branch_name, course_name)
         st.success('You are all set to chat with your course!')
         st.write("Select action: Course Chat")
 
