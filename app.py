@@ -46,7 +46,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
 st.set_page_config(page_title="VidyaRANG: Learning Made Easy",page_icon="/home/ubuntu/vidyarang.jpg",layout="centered")
-DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
+DEFAULT_CONTEXT_PROMPT_TEMPLATE_1 = """
   You're VidyaRANG. An AI assistant developed by members of AIGurukul to help students learn their course material via convertsations.
   The following is a friendly conversation between a user and an AI assistant for answering questions related to query.
   The assistant is talkative and provides lots of specific details from its context only.
@@ -57,6 +57,40 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE = """
   Instruction: Based on the above context, provide a crisp answer IN THE USER'S LANGUAGE with logical formation of paragraphs for the user question below.
   Strict Instruction: Answer "I don't know." if information is not present in context. Also, decline to answer questions that are not related to context."
   """
+#Relaxed prompt with language identification, ans in form of bullet points or short paragraphs
+DEFAULT_CONTEXT_PROMPT_TEMPLATE_2 = """
+ You're an AI assistant to help students learn their course material via convertsations.
+ The following is a friendly conversation between a user and an AI assistant for answering questions related to query.
+ The assistant is talkative and provides lots of specific details in form of bullet points or short paras from the context.
+ Here is the relevant context:
+
+
+ {context_str}
+
+
+ Instruction: Based on the above context, provide a detailed answer IN THE USER'S LANGUAGE with logical formation of paragraphs for the user question below.
+
+
+ """
+
+
+#Relaxed + Creative promt with better language identification, ans is a mix bullet points and short paragraphs
+DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
+ You're an AI assistant to help students learn their course material via convertsations.
+ The following is a friendly conversation between a user and a Generative AI assistant for answering questions related to query.
+ The assistant is descriptive and provides lots of specific details as a mix of bullet points and short paragraphs from the context.
+ Here is the relevant context:
+
+
+ {context_str}
+
+
+ Instruction: Based on the above context, provide a detailed and creative answer in same LANGUAGE as of  USER'S question with logical formation of paragraphs for the user question below.
+
+
+ """
+
+
 condense_prompt = (
   "Given the following conversation between a user and an AI assistant and a follow up question from user,"
   "rephrase the follow up question to be a standalone question.\n"
@@ -74,7 +108,7 @@ AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
 S3_BUCKET_NAME = s3_bucket_name
 
-token = "your github token"
+token = "your git token"
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
@@ -289,7 +323,7 @@ def course_chat(option,username=username):
     index = load_index_from_storage(storage_context,service_context = ServiceContext.from_defaults(llm=OpenAI(model="gpt-3.5-turbo", temperature=0),embed_model=embed_model))
     if username == "GB123" or username == "Koosh0610" or username == "anupam.aiml@gmail.com" or username == "Helloworld" :
         llm = OpenAI(model="gpt-4-1106-preview")
-        topk = 5
+        topk = 10
     else:
         llm = OpenAI(model="gpt-3.5-turbo-0125")
         topk= 2
@@ -327,6 +361,13 @@ def course_chat(option,username=username):
     
     service_context = ServiceContext.from_defaults(llm=llm)
     query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
+    prompt=st.selectbox("Select Action",["Restrictive Prompt","Relaxed Prompt","Creative Prompt"])
+    if prompt=="Restrictive Prompt":
+       default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_1
+    elif prompt=="Relaxed Prompt":
+       default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_2
+    else:
+       default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 
     if "messages" not in st.session_state.keys(): # Initialize the chat messages history
         st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     if "message_history" not in st.session_state.keys():
@@ -345,7 +386,7 @@ def course_chat(option,username=username):
             with st.spinner("Thinking..."):
                 all_nodes  = hybrid_retriever.retrieve(str(prompt))
                 start = time.time()
-                response = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE,condense_prompt=condense_prompt,chat_history=st.session_state.message_history).chat(str(prompt))
+                response = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=default_prompt,condense_prompt=condense_prompt,chat_history=st.session_state.message_history).chat(str(prompt))
                 end = time.time()
                 st.write(response.response)
                 context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
