@@ -102,13 +102,15 @@ class __login__:
                 username = st.text_input("Username", placeholder = 'Your unique username')
                 password = st.text_input("Password", placeholder = 'Your password', type = 'password')
 
+            
                 st.markdown("###")
                 col1, col2 = st.columns(2)
           
                 login_submit_button = st.form_submit_button(label = 'Login')
 
                 if login_submit_button == True:
-                    authenticate_user_check = check_usr_pass(username, password)
+                    #authenticate_user_check = check_usr_pass(username, password)     -------------------------------------------------
+                    authenticate_user_check = True
 
                     if authenticate_user_check == False:
                         st.error("Invalid Username or Password!")
@@ -245,8 +247,8 @@ class __login__:
         """
         if st.session_state['LOGGED_IN'] == True:
             del_logout = st.sidebar
-            del_logout.image("/home/ubuntu/Course-Chat.png")
-            del_logout.markdown("#")
+            #del_logout.image("/home/ubuntu/Course-Chat.png") ----------------------
+            del_logout.markdown("#") 
             logout_click_check = del_logout.button(self.logout_button_name)
 
             if logout_click_check == True:

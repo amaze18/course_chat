@@ -2,7 +2,7 @@ import re
 import json
 import secrets
 from argon2 import PasswordHasher
-from trycourier import Courier
+#from trycourier import Courier
 import pandas as pd
 
 ph = PasswordHasher()
@@ -27,8 +27,6 @@ def check_usr_pass(username: str, password: str) -> bool:
             except:
                 pass
     return False
-
-
 def load_lottieurl(url: str) -> str:
     """
     Fetches the lottie animation using the URL.
@@ -49,7 +47,7 @@ def check_valid_name(name_sign_up: str) -> bool:
 
     if re.search(name_regex, name_sign_up):
         return True
-    return False
+    return True #_____false________
 
 def check_valid_email(email_sign_up: str) -> bool:
     """
@@ -59,7 +57,7 @@ def check_valid_email(email_sign_up: str) -> bool:
 
     if re.fullmatch(regex, email_sign_up):
         return True
-    return False
+    return True #_____false________
 
 def check_unique_email(email_sign_up: str) -> bool:
     """
@@ -75,7 +73,7 @@ def check_unique_email(email_sign_up: str) -> bool:
                 if user['email'].lower() == email_sign_up_lower:
                     return False  # Email already exists
         return True  # Email exists and is allowed
-    return False  # Email not in the allowed set
+    return True #_____false________ # Email not in the allowed set
 
 def non_empty_str_check(username_sign_up: str) -> bool:
     """
@@ -105,7 +103,7 @@ def check_unique_usr(username_sign_up: str):
             authorized_user_data_master.append(user['username'])
 
     if username_sign_up in authorized_user_data_master:
-        return False
+        return True #_____false________
     
     non_empty_check = non_empty_str_check(username_sign_up)
 
@@ -153,7 +151,7 @@ def check_username_exists(user_name: str) -> bool:
         
     if user_name in authorized_user_data_master:
         return True
-    return False
+    return True #_____false________
 
 def check_email_exists(email_forgot_passwd: str):
     """
@@ -165,7 +163,8 @@ def check_email_exists(email_forgot_passwd: str):
         for user in authorized_users_data:
             if user['email'] == email_forgot_passwd:
                     return True, user['username']
-    return False, None
+    #return False, None
+    return True #_____false________
 
 def generate_random_passwd() -> str:
     """
@@ -178,7 +177,8 @@ def send_passwd_in_email(auth_token: str, username_forgot_passwd: str, email_for
     """
     Triggers an email to the user containing the randomly generated password.
     """
-    client = Courier(auth_token=auth_token)
+    pass
+    '''client = Courier(auth_token=auth_token)
 
     message_body = (
         f"Hi {username_forgot_passwd},\n\n"
@@ -199,7 +199,7 @@ def send_passwd_in_email(auth_token: str, username_forgot_passwd: str, email_for
             }
         }
     )
-    return resp
+    return resp'''
 
 def change_passwd(email_: str, random_password: str) -> None:
     """
@@ -229,4 +229,4 @@ def check_current_passwd(email_reset_passwd: str, current_passwd: str) -> bool:
                         return True
                 except:
                     pass
-    return False
+    return True #_____false________
