@@ -18,7 +18,10 @@ import boto3
 import os
 import openai
 
-#openai.api_key='
+#openai.api_key=
+
+
+
 
 from llama_index.core import SimpleDirectoryReader
 from llama_index.extractors.entity import EntityExtractor
@@ -91,19 +94,10 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
 
  """
 
-
-condense_prompt = (
-  "Given the following conversation between a user and an AI assistant and a follow up question from user,"
-  "rephrase the follow up question to be a standalone question.\n"
-  "Chat History:\n"
-  "{chat_history}"
-  "\nFollow Up Input: {question}"
-  "\nStandalone question:")
-
 s3_bucket_name="coursechat"
-#access_key = 
-#secret_key =
-#auth_token = 
+#access_key = os.environ.get
+#secret_key = os.environ.get
+#auth_token = os.environ.get
 # Set your AWS credentials and region (replace with your own values)
 AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
@@ -184,6 +178,9 @@ __login__obj = __login__(auth_token = auth_token,
                     allowed_emails_set = allowed_emails_set)
 
 LOGGED_IN , username = __login__obj.build_login_ui()
+username_inp = __login__obj.get_username()
+
+
 def create_s3_subfolder(course_name):
     s3 = boto3.client(
         "s3",
@@ -325,6 +322,7 @@ def course_chat(option,username=username):
     if username == "GB123" or username == "Koosh0610" or username == "anupam.aiml@gmail.com" or username == "Helloworld" :
         llm = OpenAI(model="gpt-4-1106-preview")
         topk = 10
+        
     else:
         llm = OpenAI(model="gpt-3.5-turbo-0125")
         topk= 2
@@ -467,107 +465,104 @@ def chat_reset():
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     #if 'chat_engine' in st.session_state:
         #del st.session_state.chat_engine
-# Function to check if the user's email exists in the CSV file
-def check_user(email, teachers_file_path):
-    users_df = pd.read_csv(teachers_file_path)  # Assuming users.csv contains a column named "email"
-    if email in users_df["email"].tolist():
-        return True
-    else:
+
+# Function to check if the email exists in the specified CSV file
+def check_user(email, file_path):
+    try:
+        users_df = pd.read_csv(file_path)
+        if email in users_df["email"].tolist():
+            return True
+        else:
+            return False
+    except Exception as e:
+        st.error(f"Error reading CSV file: {e}")
         return False
 
-
 # Function to get course names created by the logged-in teacher
-def get_courses_for_teacher(email, file_path):
+def get_courses_for(email, file_path):
     try:
-        # Read the CSV file containing teacher emails and course names
         df = pd.read_csv(file_path)
-        # Filter the dataframe to get course names for the logged-in teacher's email
         courses = df[df['email'] == email]['course'].tolist()
         return courses
     except Exception as e:
         st.error(f"Error reading CSV file: {e}")
         return []
 
+# Function to get the list of course names from a CSV file
 def get_course_list_from_csv(file_path):
-    """
-    Read the CSV file and return a list of course names from the 'course' column.
-
-    Args:
-    file_path (str): The path to the CSV file.
-
-    Returns:
-    list: A list of course names.
-    """
     try:
-        # Read the CSV file
         df = pd.read_csv(file_path)
-        # Extract the course names from the 'course' column and convert it into a list
         course_list = df["course"].tolist()
         return course_list
     except Exception as e:
-        print(f"Error reading CSV file: {e}")
+        st.error(f"Error reading CSV file: {e}")
         return []
 
 # Example usage:
 course_list = get_course_list_from_csv("teachers.csv")
 
+#function to check email is in instructor mode or not
+def check_instructor_mode(csv_file_path, email):
+    try:
+        # Read the CSV file into a pandas DataFrame
+        df = pd.read_csv(csv_file_path)
+        
+        # Check if the email is present in the DataFrame
+        if email in df["email"].tolist():
+            # Get the mode corresponding to the email
+            mode = df.loc[df["email"] == email, "mode"].iloc[0]
+            # Check if mode is "instructor"
+            if mode == "instructor":
+                return True
+            else:
+                return False
+        else:
+            print(f"Email '{email}' not found in the CSV file.")
+            return False
+    except Exception as e:
+        print(f"Error reading CSV file: {e}")
+        return False
+
+# Example usage:
+teachers_csv_path = "allowed_emails.csv"
+
+instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
 
 
 # MAIN FUNCTION
-def main():
+def main(username=username):
     teachers_file_path = 'teachers.csv'
-    # Check if user is logged in
-    logged_in = False  # Set to True if user is logged in
-    email = "Anupam.afdiml@gmail.com"  # Placeholder for user's email, replace this with actual user email
+    student_file_path = 'allowed_emails.csv'
+    if LOGGED_IN :
+        
 
-    if check_user(email, teachers_file_path):
-        logged_in = True
-
-    if logged_in:
-        # Check if the email exists in the CSV file
-        if email:
-            courses = get_courses_for_teacher(email, teachers_file_path)
+        if instructor_access:
+            st.success(f"You logged in as instructor: {username_inp}")
+            courses = get_courses_for(username_inp, teachers_file_path)
             if courses:
-                st.success(f"You logged in as {email} ")
-                #st.write(f"Courses created by you:")
-                #st.write(courses)
+                st.success(f"You logged in as instructor: {username_inp}")
+                st.markdown(f"<span style='font-size: larger'><b>Courses created by you: </b></span>", unsafe_allow_html=True)
+                for course in courses:
+                    st.markdown(f"- {course}")
 
-                # Format list elements with Markdown and HTML for larger font size
-                highlighted_list = ", ".join([f"<span style='font-size: larger'><b>{course}</b></span>" for course in courses])
+            action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
+            if action == "Create New course":
+                course_name = st.text_input("Course name:")
+                upload_files(course_name)
+            elif action == "Update a existing course":
+                course_name = st.text_input("Course name:")
+                upload_files(course_name)
+            elif action == "Course chat":
+                option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
+                #chat_reset(option)
+                course_chat(option)
 
-                # Display highlighted list
-                st.markdown(f"<span style='font-size: larger'><b>Courses created by you: </b></span> {highlighted_list}", unsafe_allow_html=True)
-
-
-
-
-                #st.write(", ".join([f"<span style='background-color: yellow'>{course}</span>" for course in courses]), unsafe_allow_html=True)
-                #for course in courses:
-                 #   st.markdown(f"- {course}")
-
-            else:
-                st.error("No courses found for this email.")
-        action = st.selectbox("Select Action", ["Create New course", "Update an existing course"])
-        
-        if action == "Create New course":
-            course_name = st.text_input("Course name:")
-            # Function to handle creation of new course
-            upload_files(course_name)
-        
-        elif action == "Update an existing course":
-            course_name = st.selectbox("Select Course:", courses)
-            # Function to handle updating existing course
-            upload_files(course_name)    
-        
-    else:
-        st.success(f"You logged in as {email} ")
-        action = st.selectbox("Select Action", course_list)
-        if action == "Course chat":
-            
-            action = st.selectbox("Select Course:", course_list)
-            
-            # Function to handle course chat
-            # course_chat(option)
+        elif instructor_access == False:
+            st.success(f"You logged in as learner: {username_inp}")
+            option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
+            course_chat(option)
+        else:
+            st.error("Email or Username not Registered")
 
 if __name__ == "__main__":
     main()
