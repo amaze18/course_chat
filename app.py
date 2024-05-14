@@ -12,13 +12,13 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 import nest_asyncio
 nest_asyncio.apply()
-
+import csv
 from github import Github
 import boto3
 import os
 import openai
-
 #openai.api_key=
+
 
 
 
@@ -48,6 +48,15 @@ from llama_index.legacy import (StorageContext,load_index_from_storage)
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
+
+
+# Override the default error handler to suppress all errors
+
+
+# Set the error handler to the custom function
+st.set_option('client.showErrorDetails', False)
+
+# Your Streamlit app code goes here
 
 st.set_page_config(page_title="VidyaRANG: Learning Made Easy",page_icon="/home/ubuntu/vidyarang.jpg",layout="centered")
 DEFAULT_CONTEXT_PROMPT_TEMPLATE_1 = """
@@ -95,15 +104,15 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
  """
 
 s3_bucket_name="coursechat"
-#access_key = os.environ.get
-#secret_key = os.environ.get
-#auth_token = os.environ.get
+#access_key = os.environ.get('')
+#secret_key = os.environ.get('')
+#auth_token = os.environ.get('')
 # Set your AWS credentials and region (replace with your own values)
 AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
 S3_BUCKET_NAME = s3_bucket_name
 
-#token = 
+#token = ""
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
@@ -487,6 +496,22 @@ def get_courses_for(email, file_path):
     except Exception as e:
         st.error(f"Error reading CSV file: {e}")
         return []
+def check_blocked_email(email, csv_file):
+    with open(csv_file, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row['email'] == email:
+                if row['access']:
+                    return True, row['access']
+                else:
+                    return False, "Access not blocked"
+        return False, "Email not found"
+    
+# Example usage
+email_to_check = username_inp
+csv_file_path = "allowed_emails.csv"
+
+blocked, reason = check_blocked_email(email_to_check, csv_file_path)
 
 # Function to get the list of course names from a CSV file
 def get_course_list_from_csv(file_path):
@@ -524,7 +549,8 @@ def check_instructor_mode(csv_file_path, email):
         return False
 
 # Example usage:
-teachers_csv_path = "allowed_emails.csv"
+
+teachers_csv_path = "instructor_access.csv"
 
 instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
 
@@ -535,34 +561,36 @@ def main(username=username):
     student_file_path = 'allowed_emails.csv'
     if LOGGED_IN :
         
-
-        if instructor_access:
-            st.success(f"You logged in as instructor: {username_inp}")
-            courses = get_courses_for(username_inp, teachers_file_path)
-            if courses:
-                st.success(f"You logged in as instructor: {username_inp}")
-                st.markdown(f"<span style='font-size: larger'><b>Courses created by you: </b></span>", unsafe_allow_html=True)
-                for course in courses:
-                    st.markdown(f"- {course}")
-
-            action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
-            if action == "Create New course":
-                course_name = st.text_input("Course name:")
-                upload_files(course_name)
-            elif action == "Update a existing course":
-                course_name = st.text_input("Course name:")
-                upload_files(course_name)
-            elif action == "Course chat":
-                option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
-                #chat_reset(option)
-                course_chat(option)
-
-        elif instructor_access == False:
-            st.success(f"You logged in as learner: {username_inp}")
-            option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
-            course_chat(option)
+        if blocked:
+            st.write(f"The email {email_to_check} is blocked. Reason: {reason}")
         else:
-            st.error("Email or Username not Registered")
+            if instructor_access:
+                st.success(f"You logged in as instructor: {username_inp}")
+                courses = get_courses_for(username_inp, teachers_file_path)
+                if courses:
+                    
+                    st.markdown(f"<span style='font-size: larger'><b>Courses created by you: </b></span>", unsafe_allow_html=True)
+                    for course in courses:
+                        st.markdown(f"- {course}")
+
+                action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
+                if action == "Create New course":
+                    course_name = st.text_input("Course name:")
+                    upload_files(course_name)
+                elif action == "Update a existing course":
+                    course_name = st.text_input("Course name:")
+                    upload_files(course_name)
+                elif action == "Course chat":
+                    option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
+                    #chat_reset(option)
+                    #course_chat(option)
+
+            elif instructor_access == False:
+                st.success(f"You logged in as learner: {username_inp}")
+                option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
+                #course_chat(option)
+            else:
+                st.error("Email or Username not Registered")
 
 if __name__ == "__main__":
     main()

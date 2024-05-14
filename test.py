@@ -1,28 +1,22 @@
-import pandas as pd
+import csv
 
-def check_instructor_mode(csv_file_path, email):
-    try:
-        # Read the CSV file into a pandas DataFrame
-        df = pd.read_csv(csv_file_path)
-        
-        # Check if the email is present in the DataFrame
-        if email in df["email"].tolist():
-            # Get the mode corresponding to the email
-            mode = df.loc[df["email"] == email, "mode"].iloc[0]
-            # Check if mode is "instructor"
-            if mode == "instructor":
-                return True
-            else:
-                return False
-        else:
-            print(f"Email '{email}' not found in the CSV file.")
-            return False
-    except Exception as e:
-        print(f"Error reading CSV file: {e}")
-        return False
+def check_blocked_email(email, csv_file):
+    with open(csv_file, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row['email'] == email:
+                if row['access']:
+                    return True, row['access']
+                else:
+                    return False, "Access not blocked"
+        return False, "Email not found"
 
-# Example usage:
-teachers_csv_path = "allowed_emails.csv"
-email_to_check = "saikbulusu@gmail.com"
-result = check_instructor_mode(teachers_csv_path, email_to_check)
-print(result)  # True or False
+# Example usage
+email_to_check = "sudipta2020@gmail.com"
+csv_file_path = "allowed_emails.csv"
+
+blocked, reason = check_blocked_email(email_to_check, csv_file_path)
+if blocked:
+    print(f"The email {email_to_check} is blocked. Reason: {reason}")
+else:
+    print(f"The email {email_to_check} is not blocked.")
