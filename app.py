@@ -371,7 +371,7 @@ def course_chat(option,username=username):
     if "messages" not in st.session_state.keys(): # Initialize the chat messages history
         st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
     if "message_history" not in st.session_state.keys():
-        st.session_state.message_history=[ChatMessage(role=MessageRole.ASSISTANT,content="Ask me a questioin form the course you have selected"),]
+        st.session_state.message_history=[ChatMessage(role=MessageRole.ASSISTANT,content="Ask me a question form the course you have selected"),]
     #if "chat_engine" not in st.session_state.keys(): # Initialize the chat engine
         #st.session_state.chat_engine = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=DEFAULT_CONTEXT_PROMPT_TEMPLATE,condense_prompt=condense_prompt,chat_history=st.session_state.message_history)
     if prompt := st.chat_input("Your question"): # Prompt for user input and save to chat history
