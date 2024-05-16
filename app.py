@@ -17,7 +17,7 @@ from github import Github
 import boto3
 import os
 import openai
-#openai.api_key=
+openai.api_key=
 
 
 
@@ -104,15 +104,16 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
  """
 
 s3_bucket_name="coursechat"
-#access_key = os.environ.get('')
-#secret_key = os.environ.get('')
-#auth_token = os.environ.get('')
+access_key = os.environ.get
+secret_key = os.environ.get
+auth_token = os.environ.get
+
 # Set your AWS credentials and region (replace with your own values)
 AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
 S3_BUCKET_NAME = s3_bucket_name
 
-#token = ""
+token = 
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
@@ -472,8 +473,8 @@ def get_files_in_directory(bucket_name, directory):
 
 def chat_reset():
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
-    #if 'chat_engine' in st.session_state:
-        #del st.session_state.chat_engine
+    if 'chat_engine' in st.session_state:
+        del st.session_state.chat_engine
 
 # Function to check if the email exists in the specified CSV file
 def check_user(email, file_path):
@@ -496,6 +497,10 @@ def get_courses_for(email, file_path):
     except Exception as e:
         st.error(f"Error reading CSV file: {e}")
         return []
+
+
+#This function checks if an email is blocked by searching for it in a CSV file. 
+#It returns a tuple indicating whether the email is blocked (True) or not (False), along with the reason for blocking or a message if the email is not found in the file.   
 def check_blocked_email(email, csv_file):
     with open(csv_file, mode='r') as file:
         reader = csv.DictReader(file)
@@ -507,7 +512,7 @@ def check_blocked_email(email, csv_file):
                     return False, "Access not blocked"
         return False, "Email not found"
     
-# Example usage
+
 email_to_check = username_inp
 csv_file_path = "allowed_emails.csv"
 
@@ -523,7 +528,6 @@ def get_course_list_from_csv(file_path):
         st.error(f"Error reading CSV file: {e}")
         return []
 
-# Example usage:
 course_list = get_course_list_from_csv("teachers.csv")
 
 #function to check email is in instructor mode or not
@@ -548,22 +552,23 @@ def check_instructor_mode(csv_file_path, email):
         print(f"Error reading CSV file: {e}")
         return False
 
-# Example usage:
 
 teachers_csv_path = "instructor_access.csv"
 
 instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
 
 
-# MAIN FUNCTION
+# This function defines the main logic for a Streamlit application. 
+#It handles user authentication, course management, and interaction based on user roles (instructor or learner)
 def main(username=username):
     teachers_file_path = 'teachers.csv'
     student_file_path = 'allowed_emails.csv'
-    if LOGGED_IN :
-        
-        if blocked:
-            st.write(f"The email {email_to_check} is blocked. Reason: {reason}")
-        else:
+    #displays a message indicating that a particular email is blocked, along with the reason for blocking it
+    if blocked:
+        st.write(f"The email {email_to_check} is blocked. Reason: {reason}")
+    else:   
+        if LOGGED_IN :
+            #interface for instructors after they've successfully logged in 
             if instructor_access:
                 st.success(f"You logged in as instructor: {username_inp}")
                 courses = get_courses_for(username_inp, teachers_file_path)
@@ -572,7 +577,7 @@ def main(username=username):
                     st.markdown(f"<span style='font-size: larger'><b>Courses created by you: </b></span>", unsafe_allow_html=True)
                     for course in courses:
                         st.markdown(f"- {course}")
-
+                #presents a selection box for various actions like creating a new course, updating an existing one, or accessing a course chat
                 action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
                 if action == "Create New course":
                     course_name = st.text_input("Course name:")
@@ -584,11 +589,11 @@ def main(username=username):
                     option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
                     #chat_reset(option)
                     #course_chat(option)
-
+            #displays a success message with the learner's username and prompts them to select a course from a dropdown menu. 
             elif instructor_access == False:
                 st.success(f"You logged in as learner: {username_inp}")
                 option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
-                #course_chat(option)
+                #course_chat(option)#ChatGPT
             else:
                 st.error("Email or Username not Registered")
 
