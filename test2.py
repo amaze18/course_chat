@@ -1,35 +1,15 @@
-import mysql.connector
+import pandas as pd
 
-# Connect to MySQL database
-try:
-    db_connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="123456",
-        database="instructor"
-    )
+def get_course_list_from_csv(file_path, email):
+    try:
+        df = pd.read_csv(file_path)
+        # Filter rows where the email matches
+        email_courses = df[df['email'] == email]["course"].tolist()
+        return email_courses
+    except Exception as e:
+        print(f"Error reading CSV file: {e}")
+        return []
 
-    # Create a cursor object
-    cursor = db_connection.cursor()
-
-    # Define SQL statement to create table
-    create_table_query = """
-    CREATE TABLE instructors (
-        email VARCHAR(255),
-        course VARCHAR(255)
-    )
-    """
-
-    # Execute SQL statement to create table
-    cursor.execute(create_table_query)
-    print("Table 'instructors' created successfully.")
-
-except mysql.connector.Error as error:
-    print("Error creating table:", error)
-
-finally:
-    # Close cursor and database connection
-    if 'cursor' in locals():
-        cursor.close()
-    if 'db_connection' in locals():
-        db_connection.close()
+# Example usage:
+courses = get_course_list_from_csv('teachers.csv', 'Anupam.aiml@gmail.com')
+print(courses)

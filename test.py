@@ -1,22 +1,29 @@
-import csv
+import psycopg2
+import pandas as pd
 
-def check_blocked_email(email, csv_file):
-    with open(csv_file, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row['email'] == email:
-                if row['access']:
-                    return True, row['access']
-                else:
-                    return False, "Access not blocked"
-        return False, "Email not found"
+# Connect to PostgreSQL database
+conn = psycopg2.connect(
+    dbname="app_login_db",
+    user="cuser",
+    password="123",
+    host="localhost",
+    port="5432"
+)
 
-# Example usage
-email_to_check = "sudipta2020@gmail.com"
-csv_file_path = "allowed_emails.csv"
+# Read CSV data into DataFrame
+df = pd.read_csv('your_csv_file.csv')
 
-blocked, reason = check_blocked_email(email_to_check, csv_file_path)
-if blocked:
-    print(f"The email {email_to_check} is blocked. Reason: {reason}")
-else:
-    print(f"The email {email_to_check} is not blocked.")
+# Create a cursor object
+cur = conn.cursor()
+
+# Insert data into PostgreSQL table
+for index, row in df.iterrows():
+    cur.execute(
+        "INSERT INTO your_table_name (email, restricted) VALUES (%s, %s)",
+        (row['email'], row['restricted'])
+    )
+
+# Commit and close
+conn.commit()
+cur.close()
+conn.close()

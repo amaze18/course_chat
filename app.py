@@ -21,8 +21,6 @@ openai.api_key=
 
 
 
-
-
 from llama_index.core import SimpleDirectoryReader
 from llama_index.extractors.entity import EntityExtractor
 from llama_index.core.node_parser import SentenceSplitter
@@ -103,6 +101,12 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
 
  """
 
+access_key = os.environ.get('ACCESS_ID')
+secret_key = os.environ.get('ACCESS_KEY')
+auth_token = os.environ.get('auth_token')
+
+
+
 s3_bucket_name="coursechat"
 access_key = os.environ.get
 secret_key = os.environ.get
@@ -113,7 +117,7 @@ AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
 S3_BUCKET_NAME = s3_bucket_name
 
-token = 
+token =
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
@@ -513,6 +517,8 @@ def check_blocked_email(email, csv_file):
         return False, "Email not found"
     
 
+
+
 email_to_check = username_inp
 csv_file_path = "allowed_emails.csv"
 
@@ -557,6 +563,22 @@ teachers_csv_path = "instructor_access.csv"
 
 instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
 
+def save_assignment_to_csv(course_name, users, file_path):
+    try:
+        # Create a new DataFrame with the course and users
+        data = {'course': [course_name], 'users': [', '.join(users)]}
+        df = pd.DataFrame(data)
+
+        # If the file does not exist, write the header and data
+        if not os.path.isfile(file_path):
+            df.to_csv(file_path, index=False)
+        else:
+            # Otherwise, append the data without writing the header
+            df.to_csv(file_path, mode='a', header=False, index=False)
+        
+        st.success(f"{users} can now access {course_name}.  Assigned successfully to {file_path}")
+    except Exception as e:
+        st.error(f"Error saving to CSV file: {e}")
 
 # This function defines the main logic for a Streamlit application. 
 #It handles user authentication, course management, and interaction based on user roles (instructor or learner)
@@ -572,16 +594,35 @@ def main(username=username):
             if instructor_access:
                 st.success(f"You logged in as instructor: {username_inp}")
                 courses = get_courses_for(username_inp, teachers_file_path)
+                
                 if courses:
                     
                     st.markdown(f"<span style='font-size: larger'><b>Courses created by you: </b></span>", unsafe_allow_html=True)
                     for course in courses:
                         st.markdown(f"- {course}")
                 #presents a selection box for various actions like creating a new course, updating an existing one, or accessing a course chat
-                action=st.selectbox("Select Action",["Create New course","Update a existing course","Course chat"])
+                action=st.selectbox("Select Action",["Create New course","Assign Course","Update a existing course","Course chat"])
                 if action == "Create New course":
                     course_name = st.text_input("Course name:")
+                    course_type = st.selectbox("Select course type", ["Public", "Private"])
+                    student_emails = None
+                    if course_type == "Private":
+                        student_emails = st.text_area("Enter student emails (comma-separated):")
                     upload_files(course_name)
+                elif action == "Assign Course":
+                    
+        
+                    if courses:
+                        selected_courses = st.multiselect("Select Courses", courses)
+                        user_input = st.text_input("Enter Users (comma separated)")
+            
+                        if st.button("Assign"):
+                            assigned_users = [user.strip() for user in user_input.split(',')]
+                            #st.success(f"Users {', '.join(assigned_users)} assigned to courses '{', '.join(selected_courses)}' successfully!")
+                            for course in selected_courses:
+                                save_assignment_to_csv(course, assigned_users, "allowed_private_courses.csv")
+    
+
                 elif action == "Update a existing course":
                     course_name = st.text_input("Course name:")
                     upload_files(course_name)
