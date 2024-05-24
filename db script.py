@@ -11,7 +11,7 @@ conn = psycopg2.connect(
 )
 
 # Read CSV data into DataFrame
-df = pd.read_csv('your_csv_file.csv')
+df = pd.read_csv('instructor_access.csv')
 
 # Create a cursor object
 cur = conn.cursor()
@@ -19,8 +19,8 @@ cur = conn.cursor()
 # Insert data into PostgreSQL table
 for index, row in df.iterrows():
     cur.execute(
-        "INSERT INTO your_table_name (email, restricted) VALUES (%s, %s)",
-        (row['email'], row['restricted'])
+        "INSERT INTO access_check (email, restricted) VALUES (%s, %s)",
+        (row['email'], row['mode'])
     )
 
 # Commit and close

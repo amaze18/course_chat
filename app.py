@@ -21,6 +21,7 @@ openai.api_key=
 
 
 
+
 from llama_index.core import SimpleDirectoryReader
 from llama_index.extractors.entity import EntityExtractor
 from llama_index.core.node_parser import SentenceSplitter
@@ -536,6 +537,7 @@ def get_course_list_from_csv(file_path):
 
 course_list = get_course_list_from_csv("teachers.csv")
 
+#using CSV File'
 #function to check email is in instructor mode or not
 def check_instructor_mode(csv_file_path, email):
     try:
@@ -557,6 +559,53 @@ def check_instructor_mode(csv_file_path, email):
     except Exception as e:
         print(f"Error reading CSV file: {e}")
         return False
+#using Postgress DATABASE
+import psycopg2
+
+def check_instructor_DATABASE(email):
+    # Database connection parameters
+    dbname = "your_database_name"
+    user = "your_username"
+    password = "your_password"
+    host = "your_host"  # e.g., "localhost" for local connections
+
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(dbname=dbname, user=user, password=password, host=host)
+        cur = conn.cursor()
+
+        # Query to check restricted column for the given email
+        query = """
+            SELECT restricted
+            FROM access_check
+            WHERE email = %s
+        """
+
+        # Execute the query
+        cur.execute(query, (email,))
+        row = cur.fetchone()
+
+        # Check the restricted column value
+        if row:
+            restricted = row[0]
+            return restricted == 'instructor'
+        else:
+            return False
+
+    except psycopg2.Error as e:
+        print("Error:", e)
+        return False
+
+    finally:
+        # Close cursor and connection
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+# Example usage
+
+instructor_access = check_instructor_DATABASE(username_inp)
 
 
 teachers_csv_path = "instructor_access.csv"
