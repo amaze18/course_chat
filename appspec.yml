@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu/aws_deploy
+    destination: /opt/codedeploy-agent/deployment-root/
 permissions:
   - object: /
     pattern: "**"
