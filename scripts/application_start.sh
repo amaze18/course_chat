@@ -1,5 +1,5 @@
 #!/bin/bash
 
 # Start Streamlit application
-nohup streamlit run /opt/codedeploy-agent/deployment-root/streamlit_app.py &
+nohup streamlit run test7.py --client.showErrorDetails=false --server.enableXsrfProtection=false --server.enableCORS=false --server.port=8080 &
 echo -ne '\n'
