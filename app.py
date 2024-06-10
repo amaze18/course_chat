@@ -17,7 +17,8 @@ from github import Github
 import boto3
 import os
 import openai
-openai.api_key=
+
+openai.api_key=os.environ.get('SECRET_TOKEN')
 
 
 
@@ -102,23 +103,20 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
 
  """
 
+s3_bucket_name="coursechat"
+
+
 access_key = os.environ.get('ACCESS_ID')
 secret_key = os.environ.get('ACCESS_KEY')
 auth_token = os.environ.get('auth_token')
 
-
-
-s3_bucket_name="coursechat"
-access_key = os.environ.get
-secret_key = os.environ.get
-auth_token = os.environ.get
 
 # Set your AWS credentials and region (replace with your own values)
 AWS_ACCESS_KEY = access_key
 AWS_SECRET_KEY =secret_key
 S3_BUCKET_NAME = s3_bucket_name
 
-token =
+token = 
 # Repository information
 repo_owner = "amaze18"
 repo_name = "course_chat"
@@ -129,6 +127,7 @@ from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
 st.title("VidyaRANG: Learning Made Easy")
+st.warning("Operational Timing:   9:30AM - 9:30PM IST")
 #st.cache_data.clear()
 
 REGION = 'us-east-1'
@@ -138,6 +137,13 @@ s3c = boto3.client(
         region_name = REGION,aws_access_key_id=AWS_ACCESS_KEY ,aws_secret_access_key=AWS_SECRET_KEY
     )
 def update_users():
+    """
+    Access a Google Sheet and read its data into a pandas DataFrame.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing the data from the Google Sheet.
+    """
+
     # Step 1: Access Google Sheet
     # Define the scope
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -151,6 +157,10 @@ def update_users():
     # Open the Google Sheet by its URL
     url = 'https://docs.google.com/spreadsheets/d/1iDDl36tUIhTRWN4P2aCA7FUuBKXzuKHndmK4mtn3DOA/edit?resourcekey#gid=1112975212'
     worksheet = client.open_by_url(url).sheet1
+#try:
+#    worksheet = client.open_by_url(url).sheet1
+#except gspread.exceptions.APIError as e:
+#    print(e.response)
 
     # Step 2: Read Google Sheet into pandas DataFrame
     # Get all values from the worksheet
@@ -196,7 +206,20 @@ LOGGED_IN , username = __login__obj.build_login_ui()
 username_inp = __login__obj.get_username()
 
 
-def create_s3_subfolder(course_name):
+def create_s3_subfolder(course_name:str):
+    """
+    Create a new subfolder in an S3 bucket.
+
+    Args:
+        course_name (str): The name of the course.
+        AWS_ACCESS_KEY (str): The AWS access key ID.
+        AWS_SECRET_KEY (str): The AWS secret access key.
+        S3_BUCKET_NAME (str): The name of the S3 bucket.
+
+    Returns:
+        None
+    """
+
     s3 = boto3.client(
         "s3",
         aws_access_key_id=AWS_ACCESS_KEY,
@@ -207,7 +230,20 @@ def create_s3_subfolder(course_name):
     subfolder_path = f"{course_name}/"
     s3.put_object(Bucket=S3_BUCKET_NAME, Key=subfolder_path)
 
-def upload_to_s3(course_name, file):
+def upload_to_s3(course_name:str, file:object) -> None:
+    """
+    Upload a file to an S3 bucket.
+
+    Args:
+        file (file object): The file to upload.
+        course_name (str): The name of the course.
+        AWS_ACCESS_KEY (str): The AWS access key ID.
+        AWS_SECRET_KEY (str): The AWS secret access key.
+        S3_BUCKET_NAME (str): The name of the S3 bucket.
+
+    Returns:
+        None
+    """
     s3 = boto3.client(
         "s3",
         aws_access_key_id=AWS_ACCESS_KEY,
@@ -223,8 +259,19 @@ def upload_to_s3(course_name, file):
         st.error("AWS credentials not available. Please check your credentials.")
 
 
-def download_from_s3(course_name, download_path = '/home/ubuntu', bucket_name = 'coursechat'):
-    
+def download_from_s3(course_name:str, download_path:str = '/home/ubuntu', bucket_name:str = 'coursechat'):
+    """
+    Download files from an S3 bucket to a local directory.
+
+    Args:
+        bucket_name (str): The name of the S3 bucket.
+        course_name (str): The name of the course.
+        download_path (str): The path to the local directory to download the files.
+
+    Returns:
+        None
+    """
+
     local_filename=f"{download_path}"
     s3=boto3.client('s3')
     os.makedirs(f"{download_path}/{course_name}",exist_ok = True)
@@ -233,7 +280,16 @@ def download_from_s3(course_name, download_path = '/home/ubuntu', bucket_name = 
         s3.download_file(bucket_name, f_name , local_filename + "/" + f_name)
 
 # Creates sub folder in the s3 bucket based on the userdefined coursename
-def create_new_course(course_name):
+def create_new_course(course_name:str) -> None:
+    """
+    Create a new course with the given name.
+
+    Args:
+        course_name (str): The name of the course.
+
+    Returns:
+        None
+    """
 
     # Type box to get input for course name
 
@@ -247,7 +303,18 @@ def create_new_course(course_name):
 
 
 
-def indexgenerator(indexPath, documentsPath):
+def indexgenerator(indexPath:str, documentsPath:str) -> VectorStoreIndex:
+    """
+    Check if the index exists, if not, create it.
+
+    Args:
+        indexPath (str): The path to the index.
+        documentsPath (str): The path to the documents.
+
+    Returns:
+        VectorStoreIndex: The loaded or created index.
+    """
+
     # check if storage already exists
     embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
     if not os.path.exists(indexPath):
@@ -275,7 +342,22 @@ def indexgenerator(indexPath, documentsPath):
 
     return index
 
-def push_directory_to_github(directory_path, repo_owner, repo_name, token, branch_name,course_name):
+def push_directory_to_github(directory_path:str, repo_owner:str, repo_name:str, token:str, branch_name:str,course_name:str) -> None:
+    """
+    Upload a directory to a specific branch in a GitHub repository.
+
+    Args:
+        directory_path (str): The path to the directory to be uploaded.
+        course_name (str): The name of the course.
+        repo_owner (str): The owner of the GitHub repository.
+        repo_name (str): The name of the GitHub repository.
+        token (str): The GitHub personal access token.
+        branch_name (str): The name of the branch in the GitHub repository.
+
+    Returns:
+        None
+    """
+
     # Authenticate to GitHub using token
     g = Github(token)
     print(token,repo_owner,repo_name)
@@ -313,7 +395,18 @@ def push_directory_to_github(directory_path, repo_owner, repo_name, token, branc
             repo.create_file(f"Indices/{dir_name}/{file_name}", f"Add {file_name}", content_utf8, branch=branch_name)
 
 
-def get_indexed_course_list():
+def get_indexed_course_list() -> list:
+    """
+    Get a list of index files from the GitHub repository.
+
+    Args:
+        repo_owner (str): The owner of the GitHub repository.
+        repo_name (str): The name of the GitHub repository.
+        token (str): The GitHub personal access token.
+
+    Returns:
+        list: A list of index files.
+    """
     g = Github(token)
 
     # Get the repository
@@ -329,7 +422,21 @@ def get_indexed_course_list():
     except:
         return []
     
-def course_chat(option,username=username):
+def course_chat(option:str,username:str=username) -> None:
+    """
+    Initiate a chat session for a selected course.
+
+    Args:
+        option (str): The selected course.
+        username (str): The username of the user initiating the chat.
+        repo_owner (str): The owner of the GitHub repository.
+        repo_name (str): The name of the GitHub repository.
+        token (str): The GitHub personal access token.
+        branch_name (str): The name of the branch in the GitHub repository.
+
+    Returns:
+        None
+    """
     embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
     indexPath=f"/home/ubuntu/Indices/{option}"  
     storage_context = StorageContext.from_defaults(persist_dir=indexPath)
@@ -400,7 +507,7 @@ def course_chat(option,username=username):
             with st.spinner("Thinking..."):
                 all_nodes  = hybrid_retriever.retrieve(str(prompt))
                 start = time.time()
-                response = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=default_prompt,condense_prompt=condense_prompt,chat_history=st.session_state.message_history).chat(str(prompt))
+                response = CondensePlusContextChatEngine.from_defaults(query_engine,context_prompt=default_prompt,condense_prompt=prompt,chat_history=st.session_state.message_history).chat(str(prompt))
                 end = time.time()
                 st.write(response.response)
                 context_str = "\n\n".join([n.node.get_content(metadata_mode=MetadataMode.LLM).strip() for n in all_nodes])
@@ -431,7 +538,21 @@ def course_chat(option,username=username):
                 st.session_state.messages.append(message) # Add response to message history
 
 
-def upload_files(course_name, download_path = '/home/ubuntu'):
+def upload_files(course_name:str, download_path:str = '/home/ubuntu') -> None:
+    """
+    Upload files, process them, and initiate course chat.
+
+    Args:
+        course_name (str): The name of the course.
+        download_path (str): The path to download the files.
+        repo_owner (str): The owner of the GitHub repository.
+        repo_name (str): The name of the GitHub repository.
+        token (str): The GitHub personal access token.
+        branch_name (str): The name of the branch in the GitHub repository.
+
+    Returns:
+        None
+    """
     
     st.header("Upload Files")
 
@@ -456,7 +577,18 @@ def upload_files(course_name, download_path = '/home/ubuntu'):
         st.write("Select action: Course Chat")
 
 
-def get_files_in_directory(bucket_name, directory):
+def get_files_in_directory(bucket_name:str, directory:str) -> list:
+    """
+    List files in a directory within an S3 bucket.
+
+    Args:
+        s3: Boto3 S3 client instance.
+        bucket_name (str): Name of the S3 bucket.
+        directory (str): Directory within the bucket to list files from.
+
+    Returns:
+        list: A list of file names within the specified directory.
+    """
     s3 = boto3.client('s3')
 
     # Ensure the directory name ends with '/'
@@ -478,11 +610,22 @@ def get_files_in_directory(bucket_name, directory):
 
 def chat_reset():
     st.session_state.messages = [{"role": "assistant", "content": "Ask me a question from the course you have selected!!"}]
-    if 'chat_engine' in st.session_state:
-        del st.session_state.chat_engine
+    #if 'chat_engine' in st.session_state:
+        #del st.session_state.chat_engine
 
 # Function to check if the email exists in the specified CSV file
-def check_user(email, file_path):
+def check_user(email:str, file_path:str) -> bool:
+    """
+    Check if an email exists in a CSV file.
+
+    Args:
+        file_path (str): The path to the CSV file containing user data.
+        email (str): The email address to check for existence.
+
+    Returns:
+        bool: True if the email exists in the CSV file, False otherwise.
+              Returns False if there is an error reading the CSV file.
+    """
     try:
         users_df = pd.read_csv(file_path)
         if email in users_df["email"].tolist():
@@ -494,7 +637,18 @@ def check_user(email, file_path):
         return False
 
 # Function to get course names created by the logged-in teacher
-def get_courses_for(email, file_path):
+def get_courses_for(email:str, file_path:str) -> list:
+    """
+    Retrieve courses associated with a given email from a CSV file.
+
+    Args:
+        file_path (str): The path to the CSV file containing user data.
+        email (str): The email address for which to retrieve courses.
+
+    Returns:
+        list: A list of courses associated with the specified email.
+              Returns an empty list if there is an error reading the CSV file or if the email is not found.
+    """
     try:
         df = pd.read_csv(file_path)
         courses = df[df['email'] == email]['course'].tolist()
@@ -502,24 +656,32 @@ def get_courses_for(email, file_path):
     except Exception as e:
         st.error(f"Error reading CSV file: {e}")
         return []
+    
+def check_blocked_email(email:str, csv_file:str) -> tuple[bool, str]:
+    ''' Check access for a given email in a CSV file.
 
+    Args:
+        csv_file (str): The path to the CSV file containing user data.
+        email (str): The email address to check for access.
 
-#This function checks if an email is blocked by searching for it in a CSV file. 
-#It returns a tuple indicating whether the email is blocked (True) or not (False), along with the reason for blocking or a message if the email is not found in the file.   
-def check_blocked_email(email, csv_file):
+    Returns:
+        tuple: A tuple containing two elements:
+            - A boolean indicating whether the email has access.
+            - If the email has access, the type of access; otherwise, a message indicating the reason.
+    '''
     with open(csv_file, mode='r') as file:
         reader = csv.DictReader(file)
+
         for row in reader:
             if row['email'] == email:
                 if row['access']:
                     return True, row['access']
                 else:
                     return False, "Access not blocked"
+                
         return False, "Email not found"
     
-
-
-
+# Example usage
 email_to_check = username_inp
 csv_file_path = "allowed_emails.csv"
 
@@ -527,6 +689,15 @@ blocked, reason = check_blocked_email(email_to_check, csv_file_path)
 
 # Function to get the list of course names from a CSV file
 def get_course_list_from_csv(file_path):
+    """
+    Get the list of courses from a CSV file.
+
+    Args:
+        file_path (str): The path to the CSV file.
+
+    Returns:
+        list: A list of courses.
+    """
     try:
         df = pd.read_csv(file_path)
         course_list = df["course"].tolist()
@@ -535,11 +706,21 @@ def get_course_list_from_csv(file_path):
         st.error(f"Error reading CSV file: {e}")
         return []
 
+# Example usage:
 course_list = get_course_list_from_csv("teachers.csv")
 
-#using CSV File'
 #function to check email is in instructor mode or not
 def check_instructor_mode(csv_file_path, email):
+    """
+    Check if the email has instructor mode based on the CSV file.
+
+    Args:
+        csv_file_path (str): The path to the CSV file.
+        email (str): The email to check.
+
+    Returns:
+        bool: True if the email has instructor mode, False otherwise.
+    """
     try:
         # Read the CSV file into a pandas DataFrame
         df = pd.read_csv(csv_file_path)
@@ -559,15 +740,32 @@ def check_instructor_mode(csv_file_path, email):
     except Exception as e:
         print(f"Error reading CSV file: {e}")
         return False
+
 #using Postgress DATABASE
 import psycopg2
 
 def check_instructor_DATABASE(email):
+    """
+    Check if the user with the given email has instructor access in the database.
+
+    Args:
+        email (str): The email of the user to check.
+        dbname (str): The name of the database.
+        user (str): The username for database authentication.
+        password (str): The password for database authentication.
+        host (str): The host address of the database.
+        port (str): The port number of the database.
+
+    Returns:
+        bool: True if the user has instructor access, False otherwise.
+    """
     # Database connection parameters
-    dbname = "your_database_name"
-    user = "your_username"
-    password = "your_password"
-    host = "your_host"  # e.g., "localhost" for local connections
+    dbname="app_login_db"
+    user="cuser"
+    password="123"
+    host="localhost"
+    port="5432"
+    
 
     try:
         # Connect to the PostgreSQL database
@@ -580,11 +778,11 @@ def check_instructor_DATABASE(email):
             FROM access_check
             WHERE email = %s
         """
-
+	
         # Execute the query
         cur.execute(query, (email,))
         row = cur.fetchone()
-
+	
         # Check the restricted column value
         if row:
             restricted = row[0]
@@ -593,26 +791,41 @@ def check_instructor_DATABASE(email):
             return False
 
     except psycopg2.Error as e:
-        print("Error:", e)
+        print("-----------------Error:", e)
         return False
 
     finally:
         # Close cursor and connection
         if cur:
-            cur.close()
+           cur.close()
         if conn:
-            conn.close()
+           conn.close()
 
+	
 # Example usage
-
+#using database
 instructor_access = check_instructor_DATABASE(username_inp)
+
 
 
 teachers_csv_path = "instructor_access.csv"
 
-instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
+#instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
+
 
 def save_assignment_to_csv(course_name, users, file_path):
+    """
+    Save the assignment of users to a course to a CSV file.
+
+    Args:
+        course_name (str): The name of the course.
+        users (list): The list of users assigned to the course.
+        file_path (str): The path to the CSV file to save the assignment.
+
+    Returns:
+        None
+    """
+
     try:
         # Create a new DataFrame with the course and users
         data = {'course': [course_name], 'users': [', '.join(users)]}
@@ -632,12 +845,30 @@ def save_assignment_to_csv(course_name, users, file_path):
 # This function defines the main logic for a Streamlit application. 
 #It handles user authentication, course management, and interaction based on user roles (instructor or learner)
 def main(username=username):
+    """
+    Display actions based on user permissions and status.
+
+    Args:
+        LOGGED_IN (bool): Flag indicating whether the user is logged in.
+        instructor_access (bool): Flag indicating whether the user has instructor access.
+        username_inp (str): The username of the logged-in user.
+        blocked (bool): Flag indicating whether the email is blocked.
+        email_to_check (str): The email to check for blocking.
+        reason (str): The reason for blocking the email.
+        teachers_file_path (str): The file path to the teachers CSV file.
+        student_file_path (str): The file path to the allowed emails CSV file.
+
+    Returns:
+        None
+    """
+   
     teachers_file_path = 'teachers.csv'
     student_file_path = 'allowed_emails.csv'
     #displays a message indicating that a particular email is blocked, along with the reason for blocking it
     if blocked:
         st.write(f"The email {email_to_check} is blocked. Reason: {reason}")
-    else:   
+    else:
+       
         if LOGGED_IN :
             #interface for instructors after they've successfully logged in 
             if instructor_access:
@@ -678,12 +909,12 @@ def main(username=username):
                 elif action == "Course chat":
                     option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
                     #chat_reset(option)
-                    #course_chat(option)
+                    course_chat(option)
             #displays a success message with the learner's username and prompts them to select a course from a dropdown menu. 
             elif instructor_access == False:
                 st.success(f"You logged in as learner: {username_inp}")
                 option= st.selectbox("Select course",tuple(get_indexed_course_list()),on_change=chat_reset)
-                #course_chat(option)#ChatGPT
+                course_chat(option)#ChatGPT
             else:
                 st.error("Email or Username not Registered")
 
