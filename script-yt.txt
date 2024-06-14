@@ -1,0 +1,124 @@
+Video Title: AI Reading List (by Ilya Sutskever) - Part 3
+
+Transcript:
+hi there in this video we continue with
+the third part in the AI reading list
+series which presents the 27 study inms
+that ilas gave to John karmac back in
+2020 so make sure that you have already
+watched the previous two parts before
+continuing with this video and if you
+already did that let's get started the
+first item in the reading list is the
+multiscale context aggregation by
+dilated convolutions which argued back
+in 2015 when this paper was written so
+it might be a little bit outdated that
+dense prediction problems such as
+semantic segmentation rely to heavily on
+adaptations of convolutional neural
+networks that were originally designed
+for image classification and thus they
+introduced the dilated convolutions
+layer which allows a faster expansion of
+the CNN's receptive field without loss
+of resolution or coverage and since this
+paper was introduced dileted
+convolutions have become quite popular
+and we can see them implemented in most
+of the major Frameworks we've got today
+so definitely read this one if you want
+to see how it began the next paper is
+quite an interesting one and it proposes
+a message passing neuron Network that
+tries to predict the quantum properties
+of an organic molecule by modeling a DFT
+calculation which to my understanding is
+a very computationally expensive
+calculation in quantum physics
+unfortunately that's all I have to say
+about this paper since I am not at all
+familiar with this topic but if you find
+it interesting definitely give it a go I
+believe that the following paper
+requires no introduction as well is the
+attention is all you need paper which
+introduces the Transformer model and the
+self attention mechanism when this paper
+was written the common approach for
+sequence to sequence problems like
+machine translation or summarization was
+to use a recurrent neural network to
+encode the input and the recurrent
+neural network to decode the output
+based on the information coming from the
+encoder then if you wanted to improve
+your results you definitely would have
+also use some kind of attention
+mechanism between the encoder and the
+decoder what this paper did was to say
+no no no this is not how we should do it
+and we should instead drop the eron
+inting AL together and use only the
+attention mechanism which allows us to
+greatly enhance the computational
+parallelism and the scalability of the
+model so yeah definitely read this one
+if you haven't already since the
+attention mechanism stands at the core
+of all modern AI models and again I also
+have a video about this topic if you
+want to get a better visual
+understanding and if the last paper was
+the one that got rid of the recurent
+neural networks in sequest to sequest
+modeling the next item in the reading
+list was the one that added the
+attention mechanism to the record neural
+networks and is titled neural machine
+translation by jointly learning to align
+in translate so definitely read this
+paper if you want to get a better sense
+of how this mechanism works and why the
+authors wanted to add the attention
+layer in the first place to the encoder
+decoder architecture moving on with the
+last item on the reading list that we'll
+discuss in this video which is the
+identity mappings in deep residual
+networks in this paper the author of the
+residual blog goes even deeper with
+neural networks and he experiments with
+models that have like a thousand layers
+he also argues that the original
+residual block where you first do a
+convolution then a batch Norm then a reu
+and then again a convolution and a batch
+Norm after which you add the input
+features and apply a nonlinearity is not
+the optimal way of using the residual
+block and how we should stack instead
+these layers would be to First apply a
+batch Norm then a reu then the
+convolution and then again a batch Norm
+A reu and A convolution and then add the
+output to the input features and you can
+see that we have also removed the
+nonlinearity here at the end and by
+doing this we can observe in this figure
+that the proposed residual block obtains
+a much lower loss on both training and
+testing compared to the original one I
+believe that this way of stacking the
+layers in residual connections is still
+the standard today so if you ever wonder
+why they are constructed like that take
+a look at this paper and that's
+basically it for the third part in the
+series please hit the like button if you
+enjoy this video and please let me know
+what you think about it in the comments
+below also don't forget to subscribe if
+you want to stay up to dat with the new
+parts in this series that I am going to
+release see you in the next one bye-bye

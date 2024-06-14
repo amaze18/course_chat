@@ -98,6 +98,7 @@ class __login__:
 
             del_login = st
             with del_login.form("Login Form"):
+                
                 st.markdown("<center><h1>LOGIN</h1></center>", unsafe_allow_html=True)
                 username = st.text_input("Username", placeholder = 'Your unique username')
                 password = st.text_input("Password", placeholder = 'Your password', type = 'password')

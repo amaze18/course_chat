@@ -49,7 +49,10 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
+import requests
+from youtube_transcript_api import YouTubeTranscriptApi
 
+# Override the default error handler to suppress all errors
 
 
 # Set the error handler to the custom function
@@ -105,9 +108,9 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
 s3_bucket_name="coursechat"
 
 
-access_key = ""
-secret_key = ""
-auth_token = ""
+access_key = os.environ.get('ACCESS_ID')
+secret_key = os.environ.get('ACCESS_KEY')
+auth_token = os.environ.get('auth_token')
 
 
 # Set your AWS credentials and region (replace with your own values)
@@ -125,9 +128,7 @@ branch_name = "index"
 from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
-
 st.title("VidyaRANG: Learning Made Easy")
-st.warning("Operational Timing:   9:30AM - 9:30PM IST")
 #st.cache_data.clear()
 
 REGION = 'us-east-1'
@@ -137,13 +138,6 @@ s3c = boto3.client(
         region_name = REGION,aws_access_key_id=AWS_ACCESS_KEY ,aws_secret_access_key=AWS_SECRET_KEY
     )
 def update_users():
-    """
-    Access a Google Sheet and read its data into a pandas DataFrame.
-
-    Returns:
-        pd.DataFrame: The DataFrame containing the data from the Google Sheet.
-    """
-
     # Step 1: Access Google Sheet
     # Define the scope
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -206,20 +200,7 @@ LOGGED_IN , username = __login__obj.build_login_ui()
 username_inp = __login__obj.get_username()
 
 
-def create_s3_subfolder(course_name:str):
-    """
-    Create a new subfolder in an S3 bucket.
-
-    Args:
-        course_name (str): The name of the course.
-        AWS_ACCESS_KEY (str): The AWS access key ID.
-        AWS_SECRET_KEY (str): The AWS secret access key.
-        S3_BUCKET_NAME (str): The name of the S3 bucket.
-
-    Returns:
-        None
-    """
-
+def create_s3_subfolder(course_name):
     s3 = boto3.client(
         "s3",
         aws_access_key_id=AWS_ACCESS_KEY,
@@ -230,20 +211,7 @@ def create_s3_subfolder(course_name:str):
     subfolder_path = f"{course_name}/"
     s3.put_object(Bucket=S3_BUCKET_NAME, Key=subfolder_path)
 
-def upload_to_s3(course_name:str, file:object) -> None:
-    """
-    Upload a file to an S3 bucket.
-
-    Args:
-        file (file object): The file to upload.
-        course_name (str): The name of the course.
-        AWS_ACCESS_KEY (str): The AWS access key ID.
-        AWS_SECRET_KEY (str): The AWS secret access key.
-        S3_BUCKET_NAME (str): The name of the S3 bucket.
-
-    Returns:
-        None
-    """
+def upload_to_s3(course_name, file):
     s3 = boto3.client(
         "s3",
         aws_access_key_id=AWS_ACCESS_KEY,
@@ -259,19 +227,8 @@ def upload_to_s3(course_name:str, file:object) -> None:
         st.error("AWS credentials not available. Please check your credentials.")
 
 
-def download_from_s3(course_name:str, download_path:str = '/home/ubuntu', bucket_name:str = 'coursechat'):
-    """
-    Download files from an S3 bucket to a local directory.
-
-    Args:
-        bucket_name (str): The name of the S3 bucket.
-        course_name (str): The name of the course.
-        download_path (str): The path to the local directory to download the files.
-
-    Returns:
-        None
-    """
-
+def download_from_s3(course_name, download_path = '/home/ubuntu', bucket_name = 'coursechat'):
+    
     local_filename=f"{download_path}"
     s3=boto3.client('s3')
     os.makedirs(f"{download_path}/{course_name}",exist_ok = True)
@@ -280,16 +237,7 @@ def download_from_s3(course_name:str, download_path:str = '/home/ubuntu', bucket
         s3.download_file(bucket_name, f_name , local_filename + "/" + f_name)
 
 # Creates sub folder in the s3 bucket based on the userdefined coursename
-def create_new_course(course_name:str) -> None:
-    """
-    Create a new course with the given name.
-
-    Args:
-        course_name (str): The name of the course.
-
-    Returns:
-        None
-    """
+def create_new_course(course_name):
 
     # Type box to get input for course name
 
@@ -303,18 +251,7 @@ def create_new_course(course_name:str) -> None:
 
 
 
-def indexgenerator(indexPath:str, documentsPath:str) -> VectorStoreIndex:
-    """
-    Check if the index exists, if not, create it.
-
-    Args:
-        indexPath (str): The path to the index.
-        documentsPath (str): The path to the documents.
-
-    Returns:
-        VectorStoreIndex: The loaded or created index.
-    """
-
+def indexgenerator(indexPath, documentsPath):
     # check if storage already exists
     embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
     if not os.path.exists(indexPath):
@@ -342,22 +279,7 @@ def indexgenerator(indexPath:str, documentsPath:str) -> VectorStoreIndex:
 
     return index
 
-def push_directory_to_github(directory_path:str, repo_owner:str, repo_name:str, token:str, branch_name:str,course_name:str) -> None:
-    """
-    Upload a directory to a specific branch in a GitHub repository.
-
-    Args:
-        directory_path (str): The path to the directory to be uploaded.
-        course_name (str): The name of the course.
-        repo_owner (str): The owner of the GitHub repository.
-        repo_name (str): The name of the GitHub repository.
-        token (str): The GitHub personal access token.
-        branch_name (str): The name of the branch in the GitHub repository.
-
-    Returns:
-        None
-    """
-
+def push_directory_to_github(directory_path, repo_owner, repo_name, token, branch_name,course_name):
     # Authenticate to GitHub using token
     g = Github(token)
     print(token,repo_owner,repo_name)
@@ -395,18 +317,7 @@ def push_directory_to_github(directory_path:str, repo_owner:str, repo_name:str, 
             repo.create_file(f"Indices/{dir_name}/{file_name}", f"Add {file_name}", content_utf8, branch=branch_name)
 
 
-def get_indexed_course_list() -> list:
-    """
-    Get a list of index files from the GitHub repository.
-
-    Args:
-        repo_owner (str): The owner of the GitHub repository.
-        repo_name (str): The name of the GitHub repository.
-        token (str): The GitHub personal access token.
-
-    Returns:
-        list: A list of index files.
-    """
+def get_indexed_course_list():
     g = Github(token)
 
     # Get the repository
@@ -422,21 +333,7 @@ def get_indexed_course_list() -> list:
     except:
         return []
     
-def course_chat(option:str,username:str=username) -> None:
-    """
-    Initiate a chat session for a selected course.
-
-    Args:
-        option (str): The selected course.
-        username (str): The username of the user initiating the chat.
-        repo_owner (str): The owner of the GitHub repository.
-        repo_name (str): The name of the GitHub repository.
-        token (str): The GitHub personal access token.
-        branch_name (str): The name of the branch in the GitHub repository.
-
-    Returns:
-        None
-    """
+def course_chat(option,username=username):
     embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
     indexPath=f"/home/ubuntu/Indices/{option}"  
     storage_context = StorageContext.from_defaults(persist_dir=indexPath)
@@ -538,21 +435,7 @@ def course_chat(option:str,username:str=username) -> None:
                 st.session_state.messages.append(message) # Add response to message history
 
 
-def upload_files(course_name:str, download_path:str = '/home/ubuntu') -> None:
-    """
-    Upload files, process them, and initiate course chat.
-
-    Args:
-        course_name (str): The name of the course.
-        download_path (str): The path to download the files.
-        repo_owner (str): The owner of the GitHub repository.
-        repo_name (str): The name of the GitHub repository.
-        token (str): The GitHub personal access token.
-        branch_name (str): The name of the branch in the GitHub repository.
-
-    Returns:
-        None
-    """
+def upload_files(course_name, download_path = '/home/ubuntu'):
     
     st.header("Upload Files")
 
@@ -578,6 +461,7 @@ def upload_files(course_name:str, download_path:str = '/home/ubuntu') -> None:
 
 
 
+
 def upload_files_yt(course_name:str, download_path:str = '/home/ubuntu') -> None:
     """
     Upload files, process them, and initiate course chat.
@@ -594,7 +478,7 @@ def upload_files_yt(course_name:str, download_path:str = '/home/ubuntu') -> None
         None
     """
     
-    st.header("Paste Youtube Link")
+    
 
     # Type box to get input for course name
     #course_name = st.text_input("Enter course name:")
@@ -603,32 +487,68 @@ def upload_files_yt(course_name:str, download_path:str = '/home/ubuntu') -> None
     #uploaded_file_list = st.file_uploader("Choose your files (Uploader of the file confirms that the content being uploaded is original and does not violate any copyrights, granting permission for its distribution.)", type=["pdf", "txt", "csv","doc","docx","xls","xlsx"], accept_multiple_files=True)
     #print("-----------",uploaded_file_list)
     if st.button("Upload your video") :
-        uploaded_file = "/home/ubuntu/ytscript/script.txt"
-        upload_to_s3(course_name, uploaded_file)
-        download_from_s3(course_name)
+        uploaded_file = f"/home/ubuntu/ytscript/"
+        #upload_to_s3(course_name, uploaded_file)
+        #download_from_s3(course_name)
 
         indexPath=f"{download_path}/Indices/{course_name}"
-        documents=f"{download_path}/{course_name}"
+        #documents=f"{download_path}/{course_name}"
         with st.spinner('Onboarding course:'):
-            indexgenerator(indexPath, documents)
-            shutil.rmtree(documents)
+            indexgenerator(indexPath, uploaded_file)
+            os.remove(f"{uploaded_file}{course_name}.txt")
             push_directory_to_github(indexPath, repo_owner, repo_name, token, branch_name, course_name)
         st.success('You are all set to chat with your course!')
         st.write("Select action: Course Chat")
 
 
-def get_files_in_directory(bucket_name:str, directory:str) -> list:
-    """
-    List files in a directory within an S3 bucket.
+# Function to get video title using YouTube Data API
+def get_video_title(api_key, video_id):
+    url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet"
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch video details: {response.status_code}")
+    data = response.json()
+    title = data['items'][0]['snippet']['title']
+    return title
 
-    Args:
-        s3: Boto3 S3 client instance.
-        bucket_name (str): Name of the S3 bucket.
-        directory (str): Directory within the bucket to list files from.
+# Function to get video transcript using youtube-transcript-api
+def get_video_transcript(video_id):
+    try:
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        # Join the transcript text in a readable format
+        transcript = "\n".join([entry['text'] for entry in transcript_list])
+        return transcript
+    except Exception as e:
+        raise Exception(f"Failed to fetch transcript: {e}")
 
-    Returns:
-        list: A list of file names within the specified directory.
-    """
+# Main function
+def get_transcript(video_url,course_name):
+    api_key = ""
+    
+
+    # Extract video ID from URL
+    video_id = video_url.split("v=")[-1].split("&")[0]
+    
+    try:
+        # Fetch video title
+        title = get_video_title(api_key, video_id)
+        print(f"Video Title: {title}\n")
+        
+        # Fetch video transcript
+        transcript = get_video_transcript(video_id)
+        print(f"Transcript:\n{transcript}")
+
+        # Store title and transcript in a file
+        with open(f"/home/ubuntu/ytscript/{course_name}.txt", "w", encoding="utf-8") as file:
+            file.write(f"Video Title: {title}\n\nTranscript:\n{transcript}")
+
+        print(f"\nTranscript saved to {course_name}.txt")
+    except Exception as e:
+        print(e)
+
+
+
+def get_files_in_directory(bucket_name, directory):
     s3 = boto3.client('s3')
 
     # Ensure the directory name ends with '/'
@@ -654,18 +574,7 @@ def chat_reset():
         #del st.session_state.chat_engine
 
 # Function to check if the email exists in the specified CSV file
-def check_user(email:str, file_path:str) -> bool:
-    """
-    Check if an email exists in a CSV file.
-
-    Args:
-        file_path (str): The path to the CSV file containing user data.
-        email (str): The email address to check for existence.
-
-    Returns:
-        bool: True if the email exists in the CSV file, False otherwise.
-              Returns False if there is an error reading the CSV file.
-    """
+def check_user(email, file_path):
     try:
         users_df = pd.read_csv(file_path)
         if email in users_df["email"].tolist():
@@ -677,18 +586,7 @@ def check_user(email:str, file_path:str) -> bool:
         return False
 
 # Function to get course names created by the logged-in teacher
-def get_courses_for(email:str, file_path:str) -> list:
-    """
-    Retrieve courses associated with a given email from a CSV file.
-
-    Args:
-        file_path (str): The path to the CSV file containing user data.
-        email (str): The email address for which to retrieve courses.
-
-    Returns:
-        list: A list of courses associated with the specified email.
-              Returns an empty list if there is an error reading the CSV file or if the email is not found.
-    """
+def get_courses_for(email, file_path):
     try:
         df = pd.read_csv(file_path)
         courses = df[df['email'] == email]['course'].tolist()
@@ -696,29 +594,15 @@ def get_courses_for(email:str, file_path:str) -> list:
     except Exception as e:
         st.error(f"Error reading CSV file: {e}")
         return []
-    
-def check_blocked_email(email:str, csv_file:str) -> tuple[bool, str]:
-    ''' Check access for a given email in a CSV file.
-
-    Args:
-        csv_file (str): The path to the CSV file containing user data.
-        email (str): The email address to check for access.
-
-    Returns:
-        tuple: A tuple containing two elements:
-            - A boolean indicating whether the email has access.
-            - If the email has access, the type of access; otherwise, a message indicating the reason.
-    '''
+def check_blocked_email(email, csv_file):
     with open(csv_file, mode='r') as file:
         reader = csv.DictReader(file)
-
         for row in reader:
             if row['email'] == email:
                 if row['access']:
                     return True, row['access']
                 else:
                     return False, "Access not blocked"
-                
         return False, "Email not found"
     
 # Example usage
@@ -729,15 +613,6 @@ blocked, reason = check_blocked_email(email_to_check, csv_file_path)
 
 # Function to get the list of course names from a CSV file
 def get_course_list_from_csv(file_path):
-    """
-    Get the list of courses from a CSV file.
-
-    Args:
-        file_path (str): The path to the CSV file.
-
-    Returns:
-        list: A list of courses.
-    """
     try:
         df = pd.read_csv(file_path)
         course_list = df["course"].tolist()
@@ -751,16 +626,6 @@ course_list = get_course_list_from_csv("teachers.csv")
 
 #function to check email is in instructor mode or not
 def check_instructor_mode(csv_file_path, email):
-    """
-    Check if the email has instructor mode based on the CSV file.
-
-    Args:
-        csv_file_path (str): The path to the CSV file.
-        email (str): The email to check.
-
-    Returns:
-        bool: True if the email has instructor mode, False otherwise.
-    """
     try:
         # Read the CSV file into a pandas DataFrame
         df = pd.read_csv(csv_file_path)
@@ -785,20 +650,6 @@ def check_instructor_mode(csv_file_path, email):
 import psycopg2
 
 def check_instructor_DATABASE(email):
-    """
-    Check if the user with the given email has instructor access in the database.
-
-    Args:
-        email (str): The email of the user to check.
-        dbname (str): The name of the database.
-        user (str): The username for database authentication.
-        password (str): The password for database authentication.
-        host (str): The host address of the database.
-        port (str): The port number of the database.
-
-    Returns:
-        bool: True if the user has instructor access, False otherwise.
-    """
     # Database connection parameters
     dbname="app_login_db"
     user="cuser"
@@ -844,28 +695,16 @@ def check_instructor_DATABASE(email):
 	
 # Example usage
 #using database
-#instructor_access = check_instructor_DATABASE(username_inp)
+instructor_access = check_instructor_DATABASE(username_inp)
 
 
 
 teachers_csv_path = "instructor_access.csv"
 
-instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
+#instructor_access = check_instructor_mode(teachers_csv_path, username_inp)
 
 
 def save_assignment_to_csv(course_name, users, file_path):
-    """
-    Save the assignment of users to a course to a CSV file.
-
-    Args:
-        course_name (str): The name of the course.
-        users (list): The list of users assigned to the course.
-        file_path (str): The path to the CSV file to save the assignment.
-
-    Returns:
-        None
-    """
-
     try:
         # Create a new DataFrame with the course and users
         data = {'course': [course_name], 'users': [', '.join(users)]}
@@ -882,37 +721,17 @@ def save_assignment_to_csv(course_name, users, file_path):
     except Exception as e:
         st.error(f"Error saving to CSV file: {e}")
 
-
-
-
-
 # This function defines the main logic for a Streamlit application. 
 #It handles user authentication, course management, and interaction based on user roles (instructor or learner)
 def main(username=username):
-    """
-    Display actions based on user permissions and status.
-
-    Args:
-        LOGGED_IN (bool): Flag indicating whether the user is logged in.
-        instructor_access (bool): Flag indicating whether the user has instructor access.
-        username_inp (str): The username of the logged-in user.
-        blocked (bool): Flag indicating whether the email is blocked.
-        email_to_check (str): The email to check for blocking.
-        reason (str): The reason for blocking the email.
-        teachers_file_path (str): The file path to the teachers CSV file.
-        student_file_path (str): The file path to the allowed emails CSV file.
-
-    Returns:
-        None
-    """
-    
+  
     teachers_file_path = 'teachers.csv'
     student_file_path = 'allowed_emails.csv'
     #displays a message indicating that a particular email is blocked, along with the reason for blocking it
     if blocked:
         st.write(f"The email {email_to_check} is blocked. Reason: {reason}")
     else:
-       
+        st.warning("Operation Timing:   9:30AM - 9:30PM IST")
         if LOGGED_IN :
             #interface for instructors after they've successfully logged in 
             if instructor_access:
@@ -933,9 +752,16 @@ def main(username=username):
                     if course_type == "Private":
                         student_emails = st.text_area("Enter student emails (comma-separated):")
                     upload_files(course_name)
+
+                    st.header("Paste Youtube Link")
+                    url = st.text_input("Paste link here (keep length of video under 6 minutes)")
+                    get_transcript(url, course_name)
+                    upload_files_yt(course_name)
+
+
                 elif action == "Assign Course":
                     
-        
+                        
                     if courses:
                         selected_courses = st.multiselect("Select Courses", courses)
                         user_input = st.text_input("Enter Users (comma separated)")
