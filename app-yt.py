@@ -72,6 +72,7 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_1 = """
   Instruction: Based on the above context, provide a crisp answer IN THE USER'S LANGUAGE with logical formation of paragraphs for the user question below.
   Strict Instruction: Answer "I don't know." if information is not present in context. Also, decline to answer questions that are not related to context."
   """
+
 #Relaxed prompt with language identification, ans in form of bullet points or short paragraphs
 DEFAULT_CONTEXT_PROMPT_TEMPLATE_2 = """
  You're an AI assistant to help students learn their course material via convertsations.
@@ -105,6 +106,20 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
 
  """
 
+
+DEFAULT_CONTEXT_PROMPT_TEMPLATE_4 = """
+  You’re an AI assistant designed to help students learn their medical course material through conversations. The following is a professional conversation between a user and an AI assistant for answering medical-related questions. The assistant uses precise medical terminologies and provides detailed information in the form of bullet points or short paragraphs from the context. The assistant also emphasizes that the information provided is for educational purposes and advises consulting a licensed healthcare professional for medical advice.
+
+Here is the relevant context:
+
+{context_str}
+
+Instruction: Based on the above context, provide a detailed answer IN THE USER’S LANGUAGE with logical formation of paragraphs for the user question below.
+
+Feel free to provide your specific medical question, and I will respond with a detailed, medically accurate explanation.
+"""
+
+
 s3_bucket_name="coursechat"
 
 
@@ -129,6 +144,10 @@ from streamlit_login_auth_ui.widgets import __login__
 import pandas as pd
 from io import StringIO
 st.title("VidyaRANG: Learning Made Easy")
+video_url = "https://youtu.be/9ttvfEUE5RI?si=nU_s0zoHKAgZmHJa"
+
+# Display the video
+st.video(video_url)
 #st.cache_data.clear()
 
 REGION = 'us-east-1'
@@ -379,11 +398,13 @@ def course_chat(option,username=username):
     
     service_context = ServiceContext.from_defaults(llm=llm)
     query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
-    prompt=st.selectbox("Select Action",["Restrictive Prompt","Relaxed Prompt","Creative Prompt"])
+    prompt=st.selectbox("Select Action",["Restrictive Prompt","Relaxed Prompt","Creative Prompt","Medical Prompt"])
     if prompt=="Restrictive Prompt":
        default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_1
     elif prompt=="Relaxed Prompt":
        default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_2
+    elif prompt=="Medical Prompt":
+       default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_4
     else:
        default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 
     if "messages" not in st.session_state.keys(): # Initialize the chat messages history
@@ -748,15 +769,41 @@ def main(username=username):
                 if action == "Create New course":
                     course_name = st.text_input("Course name:")
                     course_type = st.selectbox("Select course type", ["Public", "Private"])
+                    
                     student_emails = None
                     if course_type == "Private":
                         student_emails = st.text_area("Enter student emails (comma-separated):")
-                    upload_files(course_name)
+                    
+                    
+                    st.title("Chat with Document or YouTube Video")
 
-                    st.header("Paste Youtube Link")
-                    url = st.text_input("Paste link here (keep length of video under 6 minutes)")
-                    get_transcript(url, course_name)
-                    upload_files_yt(course_name)
+                    # Paths or URLs to the logo images
+                    logo1_path = "/home/ubuntu/document.png"  # Placeholder URL for logo1
+                    logo2_path = "/home/ubuntu/youtube.png"  # Placeholder URL for logo2
+
+                    # Display the logos as buttons
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        if st.button("Document", key="logo1"):
+                            st.session_state.logo_clicked = "1"
+                        st.image(logo1_path, caption="Upload Document")
+
+                    with col2:
+                        if st.button("YouTube Video", key="logo2"):
+                            st.session_state.logo_clicked = "2"
+                        st.image(logo2_path, caption="Paste YouTube Video link")
+
+                    # Display text based on the button clicked
+                    if "logo_clicked" in st.session_state:
+                        if st.session_state.logo_clicked == "1":
+                            upload_files(course_name)
+                            
+                        elif st.session_state.logo_clicked == "2":
+                            st.header("Paste Youtube Link")
+                            url = st.text_input("Paste link here (keep length of video under 6 minutes)")
+                            get_transcript(url, course_name)
+                            upload_files_yt(course_name)
 
 
                 elif action == "Assign Course":

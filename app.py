@@ -20,6 +20,8 @@ import openai
 
 openai.api_key=os.environ.get('SECRET_TOKEN')
 
+import requests
+from youtube_transcript_api import YouTubeTranscriptApi
 
 
 
@@ -101,6 +103,20 @@ DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 = """
 
 
  """
+
+
+DEFAULT_CONTEXT_PROMPT_TEMPLATE_4 = """
+  You’re an AI assistant designed to help students learn their medical course material through conversations. The following is a professional conversation between a user and an AI assistant for answering medical-related questions. The assistant uses precise medical terminologies and provides detailed information in the form of bullet points or short paragraphs from the context. The assistant also emphasizes that the information provided is for educational purposes and advises consulting a licensed healthcare professional for medical advice.
+
+Here is the relevant context:
+
+{context_str}
+
+Instruction: Based on the above context, provide a detailed answer IN THE USER’S LANGUAGE with logical formation of paragraphs for the user question below.
+
+Feel free to provide your specific medical question, and I will respond with a detailed, medically accurate explanation.
+"""
+
 
 s3_bucket_name="coursechat"
 
@@ -482,11 +498,13 @@ def course_chat(option:str,username:str=username) -> None:
     
     service_context = ServiceContext.from_defaults(llm=llm)
     query_engine=RetrieverQueryEngine.from_args(retriever=hybrid_retriever,service_context=service_context,verbose=True)
-    prompt=st.selectbox("Select Action",["Restrictive Prompt","Relaxed Prompt","Creative Prompt"])
+    prompt=st.selectbox("Select Action",["Restrictive Prompt","Relaxed Prompt","Creative Prompt","Medical Prompt"])
     if prompt=="Restrictive Prompt":
        default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_1
     elif prompt=="Relaxed Prompt":
        default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_2
+    elif prompt=="Medical Prompt":
+       default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_4
     else:
        default_prompt = DEFAULT_CONTEXT_PROMPT_TEMPLATE_3 
     if "messages" not in st.session_state.keys(): # Initialize the chat messages history
@@ -594,7 +612,7 @@ def upload_files_yt(course_name:str, download_path:str = '/home/ubuntu') -> None
         None
     """
     
-    st.header("Paste Youtube Link")
+    
 
     # Type box to get input for course name
     #course_name = st.text_input("Enter course name:")
@@ -603,19 +621,64 @@ def upload_files_yt(course_name:str, download_path:str = '/home/ubuntu') -> None
     #uploaded_file_list = st.file_uploader("Choose your files (Uploader of the file confirms that the content being uploaded is original and does not violate any copyrights, granting permission for its distribution.)", type=["pdf", "txt", "csv","doc","docx","xls","xlsx"], accept_multiple_files=True)
     #print("-----------",uploaded_file_list)
     if st.button("Upload your video") :
-        uploaded_file = "/home/ubuntu/ytscript/script.txt"
-        upload_to_s3(course_name, uploaded_file)
-        download_from_s3(course_name)
+        uploaded_file = f"/home/ubuntu/ytscript/"
+        #upload_to_s3(course_name, uploaded_file)
+        #download_from_s3(course_name)
 
         indexPath=f"{download_path}/Indices/{course_name}"
-        documents=f"{download_path}/{course_name}"
+        #documents=f"{download_path}/{course_name}"
         with st.spinner('Onboarding course:'):
-            indexgenerator(indexPath, documents)
-            shutil.rmtree(documents)
+            indexgenerator(indexPath, uploaded_file)
+            os.remove(f"{uploaded_file}{course_name}.txt")
             push_directory_to_github(indexPath, repo_owner, repo_name, token, branch_name, course_name)
         st.success('You are all set to chat with your course!')
         st.write("Select action: Course Chat")
 
+
+# Function to get video title using YouTube Data API
+def get_video_title(api_key, video_id):
+    url = f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet"
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch video details: {response.status_code}")
+    data = response.json()
+    title = data['items'][0]['snippet']['title']
+    return title
+
+# Function to get video transcript using youtube-transcript-api
+def get_video_transcript(video_id):
+    try:
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        # Join the transcript text in a readable format
+        transcript = "\n".join([entry['text'] for entry in transcript_list])
+        return transcript
+    except Exception as e:
+        raise Exception(f"Failed to fetch transcript: {e}")
+
+# Main function
+def get_transcript(video_url,course_name):
+    api_key = ""
+    
+
+    # Extract video ID from URL
+    video_id = video_url.split("v=")[-1].split("&")[0]
+    
+    try:
+        # Fetch video title
+        title = get_video_title(api_key, video_id)
+        print(f"Video Title: {title}\n")
+        
+        # Fetch video transcript
+        transcript = get_video_transcript(video_id)
+        print(f"Transcript:\n{transcript}")
+
+        # Store title and transcript in a file
+        with open(f"/home/ubuntu/ytscript/{course_name}.txt", "w", encoding="utf-8") as file:
+            file.write(f"Video Title: {title}\n\nTranscript:\n{transcript}")
+
+        print(f"\nTranscript saved to {course_name}.txt")
+    except Exception as e:
+        print(e)
 
 def get_files_in_directory(bucket_name:str, directory:str) -> list:
     """
@@ -912,7 +975,7 @@ def main(username=username):
     if blocked:
         st.write(f"The email {email_to_check} is blocked. Reason: {reason}")
     else:
-       
+        st.warning("Operation Timing:   9:30AM - 9:30PM IST")
         if LOGGED_IN :
             #interface for instructors after they've successfully logged in 
             if instructor_access:
@@ -929,13 +992,46 @@ def main(username=username):
                 if action == "Create New course":
                     course_name = st.text_input("Course name:")
                     course_type = st.selectbox("Select course type", ["Public", "Private"])
+                    
                     student_emails = None
                     if course_type == "Private":
                         student_emails = st.text_area("Enter student emails (comma-separated):")
-                    upload_files(course_name)
+                    
+                    
+                    st.title("Chat with Document or YouTube Video")
+
+                    # Paths or URLs to the logo images
+                    logo1_path = "/home/ubuntu/document.png"  # Placeholder URL for logo1
+                    logo2_path = "/home/ubuntu/youtube.png"  # Placeholder URL for logo2
+
+                    # Display the logos as buttons
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        if st.button("Document", key="logo1"):
+                            st.session_state.logo_clicked = "1"
+                        st.image(logo1_path, caption="Upload Document")
+
+                    with col2:
+                        if st.button("YouTube Video", key="logo2"):
+                            st.session_state.logo_clicked = "2"
+                        st.image(logo2_path, caption="Paste YouTube Video link")
+
+                    # Display text based on the button clicked
+                    if "logo_clicked" in st.session_state:
+                        if st.session_state.logo_clicked == "1":
+                            upload_files(course_name)
+                            
+                        elif st.session_state.logo_clicked == "2":
+                            st.header("Paste Youtube Link")
+                            url = st.text_input("Paste link here (keep length of video under 6 minutes)")
+                            get_transcript(url, course_name)
+                            upload_files_yt(course_name)
+
+
                 elif action == "Assign Course":
                     
-        
+                        
                     if courses:
                         selected_courses = st.multiselect("Select Courses", courses)
                         user_input = st.text_input("Enter Users (comma separated)")
